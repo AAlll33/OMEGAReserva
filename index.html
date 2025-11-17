@@ -3,1003 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reserva de Tablas - Omega Bingo</title>
-    <!-- Carga de Tailwind CSS -->
+    <title>RESERVA DE TABLAS OMEGA BINGO - Panel de Administración</title>
+    <!-- Carga Tailwind CSS para un diseño moderno y responsive -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Carga de Font Awesome para íconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <!-- LICENCIA Y DERECHOS DE AUTOR: MASSON -->
-    <script>
-        // Esta sección es una disuasión básica contra la copia casual. 
-        // El código del lado del cliente siempre es visible y estas medidas son fácilmente anulables.
-
-        /* * PROPIEDAD INTELECTUAL Y DERECHOS DE AUTOR
-         * Masson© todos los derechos reservados.
-         * Queda prohibida la reproducción total o parcial de este código 
-         * sin la autorización expresa de su propietario.
-         */
-
-        // Deshabilitar menú contextual (clic derecho)
-        // Puedes descomentar la siguiente línea si deseas desactivarlo completamente.
-        // document.addEventListener('contextmenu', event => event.preventDefault());
-
-        // Deshabilitar teclas comunes de desarrollador (F12, Ctrl/Cmd + Shift + I/J/C)
-        // Puedes descomentar la siguiente función si deseas desactivarlas.
-        /*
-        document.onkeydown = function(e) {
-            if (e.key === 'F12' || 
-                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
-                (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'))
-            ) {
-                e.preventDefault();
-                return false;
-            }
-        };
-        */
-
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-purple': '#4B0082', // Morado intenso
-                        'secondary-yellow': '#FFD700', // Dorado/Amarillo
-                        'dark-bg': '#31005A', // Fondo oscuro
-                        'light-card': '#FFFFFF',
-                        'reserved': '#FFA500', // Naranja para RESERVADO (Pendiente de Pago)
-                        'sold': '#FF0000', // Rojo para VENDIDO
-                        'available': '#008000', // Verde para DISPONIBLE
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Estilos personalizados para el fondo principal */
-        body {
-            background-color: #31005A; /* dark-bg */
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
+        :root {
+            --color-primary: #5b21b6; /* Morado Oscuro */
+            --color-secondary: #facc15; /* Amarillo */
         }
-        /* Estilo para los botones principales (Comprar/Reservar) */
-        .primary-button {
-            background-color: #FFD700; /* secondary-yellow */
-            color: #4B0082; /* primary-purple */
-            font-weight: bold;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #3f0e8f; /* Fondo oscuro morado */
+        }
+        .card {
+            background-color: white;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .admin-panel {
+            background-color: var(--color-primary);
+            color: white;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 1rem;
+        }
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
-            transition: background-color 0.2s;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-        .primary-button:hover {
-            background-color: #e0b800;
-        }
-        /* Estilo para tarjetas de información */
-        .info-card {
-            background-color: #FFFFFF;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-        }
-        /* Estilo para los números en la grilla */
-        .number-cell {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem 0.25rem; /* Ajuste para dispositivos móviles */
-            border-radius: 0.5rem;
             font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.1s, opacity 0.1s, border-color 0.1s;
-            min-height: 48px; /* Asegurar área de toque */
+            transition: background-color 0.3s;
         }
-        .number-cell:active {
-            transform: scale(0.95);
+        .btn-primary:hover {
+            background-color: #4c1d95;
         }
-        /* Estilos de estado */
-        .state-available { background-color: #d1e7dd; color: #0f5132; }
-        .state-reserved { background-color: #ffe4b5; color: #856404; }
-        .state-sold { background-color: #f8d7da; color: #721c24; }
-        .state-admin-selected { background-color: #00BFFF; color: white; border: 2px solid #FFD700; }
-
-        /* Estilo para el modal */
+        /* Estilo para el botón de Guardar Configuración */
+        .btn-save-config {
+            background-color: var(--color-primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(91, 33, 179, 0.4);
+        }
+        .btn-save-config:hover {
+            background-color: #4c1d95;
+        }
+        /* Estilo del Header Amarillo */
+        header {
+            background-color: var(--color-secondary);
+            color: var(--color-primary);
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-align: center;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-radius: 0.75rem;
+        }
+        /* Estilo para el modal de Error/Mensaje */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.85); /* Más oscuro para destacar la tabla */
-            display: none; /* Oculto por defecto */
-            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
             justify-content: center;
-            z-index: 50;
+            align-items: center;
+            z-index: 1000;
         }
-        /* Estilo para la imagen de la tabla en el modal */
-        #table-image {
-            max-width: 90vw;
-            max-height: 80vh;
-            border-radius: 0.5rem;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            text-align: center;
         }
+        .text-purple-700 { color: #5b21b6; }
+        .bg-yellow-100 { background-color: #fef3c7; }
+        .text-yellow-800 { color: #92400e; }
+
     </style>
-    <!-- Firebase SDKs -->
+</head>
+<body class="p-4">
+
+    <header class="shadow-lg">
+        RESERVA DE TABLAS OMEGA BINGO
+        <div id="total-tablas-disponibles" class="text-sm font-semibold text-gray-700">Total de Tablas disponibles: Cargando...</div>
+    </header>
+
+    <!-- Error de Conexión (visible si falla) -->
+    <div id="connection-error" class="hidden bg-red-500 text-white p-3 rounded-lg mb-4 text-sm font-semibold text-center">
+        Error de conexión: Por favor, revisa la configuración de Firebase en el código.
+    </div>
+
+    <!-- Panel de Administración - Botones de Navegación -->
+    <div class="flex justify-around mb-4">
+        <button onclick="window.location.href = '#vista-jugador';" class="flex items-center space-x-2 bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-4 rounded-xl transition duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
+            <span>Vista del Jugador</span>
+        </button>
+        <button onclick="window.location.href = '#panel-administracion';" class="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-purple-900 font-bold py-3 px-4 rounded-xl transition duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zM9 7a1 1 0 012 0v2h-2V7z" /></svg>
+            <span>Panel de Administración</span>
+        </button>
+    </div>
+
+
+    <!-- Sección Principal de Administración -->
+    <section id="panel-administracion" class="admin-panel shadow-2xl">
+        <h2 class="text-xl font-bold mb-3 flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-.28-.84-.36-1.27-.24C10.04 3.42 9.8 3.87 9.8 4.3v4.43a2.32 2.32 0 011.16-.32h.01c.41 0 .78.14 1.05.38.27.24.42.59.42.98v1.89c0 .66-.46 1.25-1.12 1.39l-2.02.41a3.02 3.02 0 00-1.89.56l-1.01.6c-.34.2-.6.47-.73.8-.13.33-.17.69-.1.97.07.28.25.54.51.72.26.18.6.28 1 .28h6.12c.7 0 1.27-.58 1.27-1.3v-1.89c0-.4-.15-.75-.42-.98-.27-.24-.64-.38-1.05-.38h-.01a2.32 2.32 0 01-1.16-.32V4.3c0-.43-.24-.88-.67-1.01zM10 18a8 8 0 100-16 8 8 0 000 16z" clip-rule="evenodd" /></svg>
+            <span>Panel de Administración</span>
+        </h2>
+        <div id="admin-id" class="text-sm mb-4">Admin ID: Cargando...</div>
+
+        <!-- Bloque de Configuración General -->
+        <div class="card bg-purple-100 text-purple-900">
+            <h3 class="text-lg font-bold mb-3 text-purple-700">Configuración General</h3>
+            
+            <label class="block text-sm font-medium mb-1">Costo de la Tabla (Ej: 300,00 Bs):</label>
+            <input type="number" id="costo-tabla" value="300" class="w-full p-2 border border-purple-300 rounded-lg mb-3 focus:ring-purple-500 focus:border-purple-500">
+
+            <label class="block text-sm font-medium mb-1">WhatsApp del Administrador (Solo números, con código de país. Ej: 584121234567):</label>
+            <input type="text" id="whatsapp-admin" value="58426431972" class="w-full p-2 border border-purple-300 rounded-lg mb-3 focus:ring-purple-500 focus:border-purple-500">
+
+            <label class="block text-sm font-medium mb-1">Información de Pago y Reglas (se mostrará al jugador):</label>
+            <textarea id="info-pago-reglas" rows="5" class="w-full p-2 border border-purple-300 rounded-lg mb-3 focus:ring-purple-500 focus:border-purple-500">25822059
+04129546751
+0108 provincial</textarea>
+
+            <label class="block text-sm font-medium mb-1">Cantidad Total de Tablas Activas (Máx 75):</label>
+            <input type="number" id="cantidad-total-tablas" value="75" min="1" max="75" class="w-full p-2 border border-purple-300 rounded-lg mb-1 focus:ring-purple-500 focus:border-purple-500">
+            <p class="text-xs text-gray-500 mb-4">Establece el número máximo de tablas (desde 01) que estarán activas y visibles. El sistema base admite hasta 75 tablas.</p>
+            
+            <button onclick="guardarConfiguracion()" class="btn-save-config w-full transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7z" /><path fill-rule="evenodd" d="M18 8v5a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2zM3.75 9A.75.75 0 003 9.75v1.5a.75.75 0 00.75.75h1.5A.75.75 0 006 11.25v-1.5A.75.75 0 005.25 9h-1.5z" clip-rule="evenodd" /></svg>
+                Guardar Configuración
+            </button>
+        </div>
+
+        <!-- Bloque de Gestión de Reservas (Simplified) -->
+        <div class="card bg-purple-100 text-purple-900 mt-4">
+            <h3 class="text-lg font-bold mb-3 text-purple-700">Gestión de Reservas (Ctrl + Clic para seleccionar múltiples)</h3>
+            <p class="bg-yellow-100 text-yellow-800 p-3 rounded-lg mb-3">
+                <span class="font-bold">Tablas Seleccionadas: </span><span id="tablas-seleccionadas-count">0</span><br>
+                <span id="tablas-seleccionadas-lista">Ninguno</span>
+            </p>
+            <!-- Botones de Acción -->
+            <div class="flex flex-wrap gap-2">
+                <button class="flex items-center space-x-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 rounded-lg transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                    Confirmar Venta (Vendido)
+                </button>
+                <button class="flex items-center space-x-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 100 2h-2a1 1 0 100-2h2z" clip-rule="evenodd" /></svg>
+                    Liberar Tablas (Disponible)
+                </button>
+                <button class="flex items-center space-x-1 bg-blue-400 hover:bg-blue-500 text-white font-semibold py-2 px-3 rounded-lg transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" /><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3h-2a3 3 0 01-3-3H6z" /></svg>
+                    Copiar Info Detallada
+                </button>
+            </div>
+            <!-- Aquí irían las tablas seleccionables (omitiéndolas por simplicidad del ejemplo) -->
+        </div>
+    </section>
+    
+    <!-- Modal para Errores/Mensajes (Sustituto de alert/confirm) -->
+    <div id="app-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h4 id="modal-title" class="text-xl font-bold mb-3 text-red-600">Error</h4>
+            <p id="modal-message" class="mb-5">Mensaje de error.</p>
+            <button id="modal-close" class="btn-primary">Cerrar</button>
+        </div>
+    </div>
+
+
     <script type="module">
-        /* * PROPIEDAD INTELECTUAL Y DERECHOS DE AUTOR
-         * Masson© todos los derechos reservados.
-         * Queda prohibida la reproducción total o parcial de este código 
-         * sin la autorización expresa de su propietario.
-         */
+        // Importaciones de Firebase SDK (versión 11.6.1)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, where, getDocs, runTransaction, updateDoc, deleteDoc, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        // Establecer nivel de log para depuración de Firestore
-        setLogLevel('Debug');
-
-        // Variables Globales de Firebase (PROPORCIONADAS POR EL ENTORNO)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let app, db, auth;
+        // setLogLevel('Debug'); // Útil para depurar en la consola si el problema persiste
+        
+        let db, auth;
         let userId = null;
         let isAuthReady = false;
 
-        const STATE = {
-            AVAILABLE: 'DISPONIBLE',
-            RESERVED: 'RESERVADO',
-            SOLD: 'VENDIDO'
-        };
+        // --- Manejo del Modal de Mensajes ---
+        const modal = document.getElementById('app-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        document.getElementById('modal-close').addEventListener('click', () => modal.style.display = 'none');
 
-        const NUM_HARD_LIMIT = 75; // Límite máximo de tablas que se inicializan en el código.
-        let NUM_RANGE = NUM_HARD_LIMIT; // Cantidad total de tablas (configurable en Admin)
-        const NUMBERS_PER_CARD = 4; // Cantidad de números por cartón (no usado aquí pero mantenido)
-
-        // --- Configuración y Rutas de Firestore ---
-        const PUBLIC_COLLECTION_PATH = `/artifacts/${appId}/public/data/bingoTables`; // Colección de tablas
-        const CONFIG_DOC_PATH = `/artifacts/${appId}/public/data/config/bingo`; // Configuración general
-
-        // --- Simulación de Directorio de Tablas ---
-        // Placeholder, ya que las imágenes reales no se pueden cargar desde el entorno de ejecución.
-        const getTableImageUrl = (numberStr) => {
-            // Placeholder: Genera una imagen simple con el número de tabla.
-            return `https://placehold.co/400x300/4B0082/FFD700?text=TABLA+${numberStr}`; 
+        function showMessage(title, message, isError = false) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalTitle.className = isError ? 'text-xl font-bold mb-3 text-red-600' : 'text-xl font-bold mb-3 text-green-600';
+            modal.style.display = 'flex';
+        }
+        
+        // =========================================================================
+        // 🚨 COMIENZO DEL BLOQUE DE CONFIGURACIÓN CRÍTICA DE FIREBASE 🚨
+        // *** ESTOS SON LOS VALORES REALES DE TU PROYECTO 'omega-bingo-reserva' ***
+        // =========================================================================
+        
+        const firebaseConfig = {
+          apiKey: "AIzaSyCz8dawYkkHh43mZWypWneYfUN9TmnUi4k",
+          authDomain: "omega-bingo-reserva.firebaseapp.com",
+          projectId: "omega-bingo-reserva",
+          storageBucket: "omega-bingo-reserva.firebasestorage.app",
+          messagingSenderId: "599243639956",
+          appId: "1:599243639956:web:e23034d8f0d692ae4bf881"
         };
         
-        // Función de inicialización de Firebase
-        const initializeFirebase = async () => {
-            try {
-                if (Object.keys(firebaseConfig).length === 0) {
-                    console.error("Error: firebaseConfig está vacío. Usando configuración dummy.");
-                    app = initializeApp({ apiKey: "dummy", authDomain: "dummy" });
-                } else {
-                    app = initializeApp(firebaseConfig);
-                }
+        // Usamos las variables globales proporcionadas por el entorno si existen, sino usamos los valores fijos.
+        // Esto asegura que la aplicación se conecte correctamente.
+        const runtimeFirebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
+        const appId = typeof __app_id !== 'undefined' ? __app_id : runtimeFirebaseConfig.appId; 
+        
+        // =========================================================================
+        // 🚨 FIN DEL BLOQUE DE CONFIGURACIÓN CRÍTICA DE FIREBASE 🚨
+        // =========================================================================
 
+
+        // --- Inicialización de Firebase y Autenticación ---
+        async function initializeFirebase() {
+            try {
+                // 1. Inicializar Apps con la configuración correcta (runtime o fija)
+                const app = initializeApp(runtimeFirebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // Autenticación usando el token de Canvas o anónimamente
-                await new Promise((resolve) => {
-                    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            userId = user.uid;
-                            isAuthReady = true;
-                            document.getElementById('admin-id').textContent = `Admin ID: ${userId}`;
-                        } else if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            const anonUser = await signInAnonymously(auth);
-                            userId = anonUser.user.uid;
-                            isAuthReady = true;
-                        }
-                        unsubscribe();
-                        resolve();
-                    });
-                });
-
-                // Iniciar listeners de Firestore
-                if (isAuthReady) {
-                    setupListeners();
+                // 2. Autenticación
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
                 }
+                
+                // 3. Listener de Estado de Autenticación
+                onAuthStateChanged(auth, (user) => {
+                    isAuthReady = true;
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('admin-id').textContent = 'Admin ID: ' + userId;
+                        // Una vez autenticado, iniciamos la escucha de datos
+                        loadConfigAndReservations();
+                    } else {
+                        // Fallback, aunque con signInAnonymously siempre deberíamos tener un user
+                        userId = crypto.randomUUID();
+                        document.getElementById('admin-id').textContent = 'Admin ID: (No autenticado) ' + userId.substring(0, 8) + '...';
+                    }
+                });
 
             } catch (error) {
                 console.error("Error al inicializar Firebase o autenticar:", error);
-                document.getElementById('status-message').textContent = `Error de conexión: ${error.message}.`;
+                document.getElementById('connection-error').classList.remove('hidden');
+                document.getElementById('connection-error').textContent = `Error de conexión: ${error.message}. ¡Verifica tu firebaseConfig!`;
+                showMessage("Error Crítico", "No se pudo conectar a Firebase. Por favor, revisa la configuración en tu código. Mensaje: " + error.message, true);
             }
-        };
+        }
 
-        // --- Estado de la Aplicación ---
-        let numberData = {};
-        let configData = { 
-            price: '300,00 Bs', 
-            availableCards: NUM_RANGE, // Este campo es redundante, lo calcula la función de renderizado
-            totalTables: NUM_HARD_LIMIT, // Nuevo campo configurable
-            paymentInfo: 'Banco: 0108 (Provincial BBVA), Cédula: V25822059, Teléfono: 04129546751. Tienes 30 minutos para pagar.',
-            adminWhatsapp: '' 
-        };
-        let adminSelectedNumbers = new Set();
-
-        // --- Lógica de la Base de Datos ---
-
-        /**
-         * Inicializa la estructura de la base de datos si es la primera vez.
-         * Crea documentos para todos los números (01 al 75) como DISPONIBLE.
-         * NOTA: Esta función DEBE ejecutarse solo una vez para crear la colección base.
-         */
-        const initializeNumbers = async (numLimit) => {
-            const batch = db.batch();
-            for (let i = 1; i <= numLimit; i++) {
-                const numStr = i.toString().padStart(2, '0');
-                const numRef = doc(db, PUBLIC_COLLECTION_PATH, numStr);
-                // Usamos set con merge true para no sobreescribir si ya existe, pero asegurando el estado inicial
-                batch.set(numRef, {
-                    number: numStr,
-                    status: STATE.AVAILABLE,
-                    reservedBy: null,
-                    phone: null,
-                    timestamp: null,
-                    tableUrl: getTableImageUrl(numStr) // Guarda la URL/Ruta de la tabla
-                }, { merge: true });
-            }
-            await batch.commit();
-            console.log(`Números inicializados a DISPONIBLE hasta el ${numLimit}.`);
-        };
-
-        /**
-         * Inicializa la configuración (Precio, Info de Pago).
-         */
-        const initializeConfig = async () => {
-            const configRef = doc(db, CONFIG_DOC_PATH);
-            await setDoc(configRef, configData, { merge: true });
-        };
-
-        /**
-         * Asigna 'cantidad' de números DISPONIBLES a un jugador.
-         */
-        const reserveNumbers = async (name, phone, quantity) => {
-            const reservedNums = [];
-            const timestamp = new Date();
-
-            await runTransaction(db, async (transaction) => {
-                // 1. Encontrar números DISPONIBLES dentro del rango activo (NUM_RANGE)
-                const availableNumbers = Object.values(numberData)
-                    .filter(n => n.status === STATE.AVAILABLE && parseInt(n.number) <= NUM_RANGE);
-                
-                if (availableNumbers.length < quantity) {
-                    throw new Error(`Solo quedan ${availableNumbers.length} tablas disponibles.`);
-                }
-
-                // 2. Seleccionar los primeros 'quantity' números disponibles
-                // Nota: Los números se seleccionan automáticamente en orden ascendente
-                const numbersToReserve = availableNumbers.slice(0, quantity).map(n => n.number);
-
-                // 3. Actualizar el estado de cada número
-                for (const numStr of numbersToReserve) {
-                    const numRef = doc(db, PUBLIC_COLLECTION_PATH, numStr);
-                    transaction.update(numRef, {
-                        status: STATE.RESERVED,
-                        reservedBy: name,
-                        phone: phone,
-                        timestamp: timestamp.toISOString(),
-                        adminNotes: ''
-                    });
-                    reservedNums.push(numStr);
-                }
-            });
-
-            return reservedNums;
-        };
-
-        /**
-         * Actualiza el estado de una lista de números (USADO POR EL ADMIN).
-         */
-        const updateNumberStatus = async (numbers, newStatus) => {
-            const batch = db.batch();
-            for (const numStr of numbers) {
-                const numRef = doc(db, PUBLIC_COLLECTION_PATH, numStr);
-                if (newStatus === STATE.AVAILABLE) {
-                    // Si se libera, borrar datos del cliente
-                    batch.update(numRef, {
-                        status: STATE.AVAILABLE,
-                        reservedBy: null,
-                        phone: null,
-                        timestamp: null,
-                        adminNotes: null
-                    });
-                } else if (newStatus === STATE.SOLD) {
-                    // Si se confirma la venta, mantener datos del cliente
-                    batch.update(numRef, {
-                        status: STATE.SOLD,
-                        // Mantener reservedBy y phone
-                        adminNotes: `Vendido. Confirmado por Admin ID: ${userId} el ${new Date().toLocaleString()}`
-                    });
-                }
-            }
-            await batch.commit();
-            adminSelectedNumbers.clear();
-            renderAdminPanel();
-            renderNumberList();
-        };
-
-        // --- Manejo del DOM y Renderizado ---
-
-        /**
-         * Renderiza la lista completa de números en la vista del jugador y del administrador.
-         * Incluye el nombre del cliente en el jugador.
-         */
-        const renderNumberList = () => {
-            const numberGrid = document.getElementById('number-grid');
-            const adminGrid = document.getElementById('admin-grid');
-            numberGrid.innerHTML = '';
-            adminGrid.innerHTML = '';
-            let availableCount = 0;
-            let reservedCount = 0;
-            let soldCount = 0;
-
-            // Usamos NUM_RANGE para determinar hasta dónde renderizar
-            const numbersToRender = Object.values(numberData)
-                .filter(item => parseInt(item.number) <= NUM_RANGE)
-                .sort((a, b) => parseInt(a.number) - parseInt(b.number));
-
-            numbersToRender.forEach(item => {
-                const numStr = item.number;
-                const status = item.status || STATE.AVAILABLE; // Usar AVAILABLE si no hay estado
-                const isSelected = adminSelectedNumbers.has(numStr);
-                const clientName = item.reservedBy ? item.reservedBy.split(' ')[0] : '';
-                
-                // Contadores de estado
-                if (status === STATE.AVAILABLE) availableCount++;
-                if (status === STATE.RESERVED) reservedCount++;
-                if (status === STATE.SOLD) soldCount++;
-
-                // Celda para la vista del JUGADOR
-                const playerCell = document.createElement('div');
-                playerCell.className = `number-cell p-2 m-0.5 text-xs sm:text-sm shadow-md transition-all cursor-pointer ${status === STATE.AVAILABLE ? 'state-available' : status === STATE.RESERVED ? 'state-reserved' : 'state-sold'}`;
-                playerCell.setAttribute('data-number', numStr);
-                playerCell.onclick = () => handleViewTable(numStr, item);
-                
-                playerCell.innerHTML = `
-                    <div class="font-bold text-lg">${numStr}</div>
-                    <div class="text-xs font-semibold uppercase">${status}</div>
-                    ${(status === STATE.RESERVED || status === STATE.SOLD) ? `<div class="text-xs font-normal mt-0.5 opacity-80 truncate" title="${item.reservedBy}">👤 ${clientName}</div>` : ''}
-                `;
-                numberGrid.appendChild(playerCell);
-
-                // Celda para la vista del ADMIN
-                const adminCell = document.createElement('div');
-                adminCell.className = `number-cell p-2 m-0.5 text-xs sm:text-sm shadow-md transition-all relative cursor-pointer ${isSelected ? 'state-admin-selected' : status === STATE.AVAILABLE ? 'state-available' : status === STATE.RESERVED ? 'state-reserved' : 'state-sold'}`;
-                adminCell.setAttribute('data-number', numStr);
-                adminCell.onclick = (e) => {
-                    // Usar (Ctrl + Clic) o (Cmd + Clic) para selección múltiple
-                    if (e.ctrlKey || e.metaKey) { 
-                        toggleAdminSelection(numStr);
-                    } else {
-                        handleViewTable(numStr, item);
-                    }
-                };
-
-                // Información detallada en Admin Grid
-                const timestamp = item.timestamp ? new Date(item.timestamp).toLocaleDateString('es-ES') : 'N/A';
-                adminCell.innerHTML = `
-                    <div class="flex flex-col items-center">
-                        <span class="text-xl font-black">${numStr}</span>
-                        <span class="text-xs font-normal uppercase">${status}</span>
-                    </div>
-                    ${(status !== STATE.AVAILABLE && item.reservedBy) ? 
-                        `<div class="mt-1 text-center">
-                            <span class="text-xs font-semibold block truncate" title="${item.reservedBy}">👤 ${clientName}</span>
-                            <span class="text-xs font-light block">🗓️ ${timestamp}</span>
-                        </div>` : ''}
-                `;
-                
-                // Añadir tooltip con información completa para el admin
-                adminCell.title = status !== STATE.AVAILABLE 
-                    ? `Tabla ${numStr}\nEstado: ${status}\nCliente: ${item.reservedBy}\nTeléfono: ${item.phone}\nFecha: ${timestamp}`
-                    : `Tabla ${numStr}\nEstado: ${status}`;
-
-                adminGrid.appendChild(adminCell);
-            });
-
-            // Actualizar contadores
-            document.getElementById('available-count').textContent = availableCount.toString().padStart(2, '0');
-            document.getElementById('reserved-count').textContent = reservedCount.toString().padStart(2, '0');
-            document.getElementById('sold-count').textContent = soldCount.toString().padStart(2, '0');
-
-            // Actualizar contador de tarjetas disponibles para el jugador
-            document.getElementById('display-available-cards').textContent = availableCount;
-        };
-
-        /**
-         * Maneja la visualización de la tabla al hacer clic en un número.
-         */
-        const handleViewTable = (numStr, item) => {
-            const status = item.status;
-            const reservedBy = item.reservedBy;
-            const tableUrl = getTableImageUrl(numStr);
+        // --- Lógica de Carga de Datos (onSnapshot) ---
+        function loadConfigAndReservations() {
+            if (!db || !userId || !isAuthReady) return; 
             
-            let title = `Tabla ${numStr} - ${status}`;
-            let description = '';
-            
-            if (status === STATE.AVAILABLE) {
-                description = 'Esta tabla está DISPONIBLE para reserva.';
-            } else if (status === STATE.RESERVED) {
-                description = `RESERVADA por ${reservedBy || 'un cliente'}. Pendiente de pago.`;
-            } else if (status === STATE.SOLD) {
-                description = `VENDIDA a ${reservedBy || 'un cliente'}. Pago confirmado.`;
-            }
+            // 1. Ruta del documento de configuración (usando la estructura de datos privada)
+            // Estructura: /artifacts/{appId}/users/{userId}/config/main
+            const configPath = `/artifacts/${appId}/users/${userId}/config/main`;
+            const configRef = doc(db, configPath);
 
-            document.getElementById('modal-table-title').textContent = title;
-            document.getElementById('modal-table-description').textContent = description;
-            
-            const tableImage = document.getElementById('table-image');
-            tableImage.src = tableUrl;
-            tableImage.alt = `Tabla de Bingo número ${numStr}`;
-            
-            // Configurar botón de descarga
-            const downloadButton = document.getElementById('modal-download-button');
-            downloadButton.onclick = () => downloadImage(tableUrl, `tabla_${numStr}_${status}.png`);
-            
-            // Mostrar modal de la tabla
-            document.getElementById('table-modal').style.display = 'flex';
-        };
-        
-        /**
-         * Función para descargar una imagen.
-         */
-        const downloadImage = (url, filename) => {
-            // Utilizamos una función de Fetch para manejar la descarga de URLs (incluyendo placeholders)
-            fetch(url, {
-                method: 'GET',
-                mode: 'cors' // Usamos 'cors' para intentar obtener el blob
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.blob();
-                } else {
-                    throw new Error(`No se pudo cargar la imagen para descargar (Status: ${response.status}).`);
-                }
-            })
-            .then(blob => {
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = URL.createObjectURL(blob);
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                URL.revokeObjectURL(a.href); // Limpiar la URL del objeto
-                document.body.removeChild(a);
-            })
-            .catch(error => {
-                console.error("Error al descargar:", error);
-                // Intento de fallback si el error es de CORS (específico para Placeholders/Canvas)
-                showModal('Error de Descarga', 'No fue posible descargar la tabla. Intente guardar la imagen manualmente o asegúrese de que la URL de la tabla es accesible.');
-            });
-        };
-
-        /**
-         * Alterna la selección de un número en el panel de administrador.
-         */
-        const toggleAdminSelection = (numStr) => {
-            if (adminSelectedNumbers.has(numStr)) {
-                adminSelectedNumbers.delete(numStr);
-            } else {
-                adminSelectedNumbers.add(numStr);
-            }
-            renderAdminPanel();
-            renderNumberList(); // Re-renderizar para actualizar el estilo
-        };
-
-        /**
-         * Renderiza el panel de administración (actualiza el contador de selección).
-         */
-        const renderAdminPanel = () => {
-            const selectedCount = adminSelectedNumbers.size;
-            document.getElementById('selected-count').textContent = selectedCount;
-
-            const selectedNumsDiv = document.getElementById('admin-selected-numbers');
-            selectedNumsDiv.textContent = selectedCount > 0 ? Array.from(adminSelectedNumbers).sort((a, b) => parseInt(a) - parseInt(b)).join(', ') : 'Ninguno';
-
-            // Habilitar/deshabilitar botones de acción
-            const actionButtons = document.querySelectorAll('#admin-actions button');
-            actionButtons.forEach(btn => btn.disabled = selectedCount === 0);
-        };
-
-
-        /**
-         * Renderiza la configuración en el panel de jugador y administrador.
-         */
-        const renderConfig = () => {
-            document.getElementById('display-price').textContent = configData.price;
-            document.getElementById('display-info').innerHTML = configData.paymentInfo.replace(/\n/g, '<br>');
-            document.getElementById('config-price').value = configData.price;
-            document.getElementById('config-info').value = configData.paymentInfo;
-            document.getElementById('config-admin-whatsapp').value = configData.adminWhatsapp || '';
-            // El valor del total de tablas ahora se carga desde configData
-            document.getElementById('config-cards').value = configData.totalTables || NUM_HARD_LIMIT; 
-            // Actualizar el rango visible en la vista del jugador (aunque no está en el HTML original, lo añado por si acaso)
-            // document.getElementById('range-display-player').textContent = NUM_RANGE;
-        };
-
-        // --- Listeners de Firestore ---
-
-        const setupListeners = () => {
-            // Listener para la Configuración
-            onSnapshot(doc(db, CONFIG_DOC_PATH), (docSnap) => {
+            // 2. Escucha en tiempo real de la configuración
+            onSnapshot(configRef, (docSnap) => {
                 if (docSnap.exists()) {
-                    configData = docSnap.data();
-                    // Actualizar NUM_RANGE si el valor en DB es válido
-                    const newRange = parseInt(configData.totalTables);
-                    if (!isNaN(newRange) && newRange > 0 && newRange <= NUM_HARD_LIMIT) {
-                        NUM_RANGE = newRange;
-                    } else {
-                        NUM_RANGE = NUM_HARD_LIMIT;
-                    }
+                    const data = docSnap.data();
+                    // Actualizar inputs con los datos de Firestore
+                    document.getElementById('costo-tabla').value = data.costoTabla || '';
+                    document.getElementById('whatsapp-admin').value = data.whatsappAdmin || '';
+                    document.getElementById('info-pago-reglas').value = data.infoPagoReglas || '';
+                    document.getElementById('cantidad-total-tablas').value = data.cantidadTotalTablas || '75';
+                    
+                    document.getElementById('total-tablas-disponibles').textContent = `Total de Tablas disponibles: ${data.cantidadTotalTablas || '75'}`;
 
-                    renderConfig();
-                    // Volver a renderizar la lista si el rango activo cambia
-                    renderNumberList();
                 } else {
-                    console.log("Documento de configuración no encontrado. Inicializando.");
-                    initializeConfig();
+                    console.log("No existe configuración previa. Usando valores por defecto.");
                 }
-            }, (error) => console.error("Error al escuchar Configuración:", error));
+            }, (error) => {
+                console.error("Error al obtener la configuración (onSnapshot):", error);
+                // Si tienes problemas de lectura, vuelve a revisar las Reglas
+            });
 
-            // Listener para los Números
-            const q = collection(db, PUBLIC_COLLECTION_PATH);
-            onSnapshot(q, async (snapshot) => {
-                let allNumbersExist = true;
-                const expectedNumbers = new Set();
-                
-                // Solo esperar números hasta NUM_HARD_LIMIT para chequear la inicialización
-                for (let i = 1; i <= NUM_HARD_LIMIT; i++) {
-                    expectedNumbers.add(i.toString().padStart(2, '0'));
-                }
-                
-                numberData = {}; // Reiniciar data
-                snapshot.docs.forEach(doc => {
-                    numberData[doc.id] = doc.data();
-                    expectedNumbers.delete(doc.id);
-                });
+            // Nota: Aquí se implementaría la lógica para onSnapshot de las reservas.
+        }
 
-                // Inicializar solo si faltan todos los números (colección vacía)
-                if (snapshot.empty) {
-                    // Si está vacía, inicializar la estructura completa con el límite fijo
-                    console.warn(`Colección de números vacía. Inicializando estructura.`);
-                    await initializeNumbers(NUM_HARD_LIMIT);
-                    return; // onSnapshot se volverá a llamar con los datos inicializados
-                }
 
-                renderNumberList();
-                document.getElementById('status-message').textContent = 'Datos de tablas actualizados en tiempo real.';
-            }, (error) => console.error("Error al escuchar Números:", error));
-        };
-
-        // --- Funciones de Interacción del Jugador ---
-
-        /**
-         * Maneja el envío del formulario de reserva.
-         */
-        const handlePlayerReserve = async (event) => {
-            event.preventDefault();
-            const form = event.target;
-            const name = form.name.value.trim();
-            const phone = form.phone.value.trim().replace(/[^0-9]/g, '');
-            const quantity = parseInt(form.quantity.value, 10);
-            
-            // Filtrar disponibles solo hasta el NUM_RANGE activo
-            const availableCount = Object.values(numberData).filter(n => n.status === STATE.AVAILABLE && parseInt(n.number) <= NUM_RANGE).length;
-
-            if (!name || !phone || quantity <= 0 || quantity > availableCount) {
-                showModal('Error', `Por favor, complete todos los campos correctamente. Cantidad máxima disponible: ${availableCount}`);
+        // --- Lógica para Guardar Configuración ---
+        window.guardarConfiguracion = async function() {
+            if (!db || !userId || !isAuthReady) {
+                showMessage("Error", "La conexión a Firebase no está lista. Inténtalo de nuevo en unos segundos o verifica la configuración.", true);
                 return;
             }
 
-            try {
-                const reservedNumbers = await reserveNumbers(name, phone, quantity);
-                if (reservedNumbers.length > 0) {
-                    const numbersList = reservedNumbers.join(', ');
-                    const whatsappMessage = generateWhatsappMessage(name, phone, quantity, numbersList);
+            const inputElement = document.getElementById('cantidad-total-tablas');
+            const cantidadTotalTablas = parseInt(inputElement.value);
 
-                    // Redireccionar a WhatsApp
-                    const adminWhatsapp = configData.adminWhatsapp;
-                    const whatsappUrl = `https://wa.me/${adminWhatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
-
-                    showModal('¡Reserva Exitosa!', `
-                        <p class="text-lg font-semibold text-primary-purple mb-3">Tus números/tablas reservadas son: <span class="text-secondary-yellow">${numbersList}</span></p>
-                        <p class="mb-4">Se ha bloqueado tu reserva (PENDIENTE DE PAGO). Haz clic abajo para coordinar el pago con el administrador.</p>
-                        <p class="text-sm italic">${configData.paymentInfo.replace(/\n/g, ' ')}</p>
-                        <div class="mt-4 flex justify-center">
-                            <a href="${whatsappUrl}" target="_blank" class="primary-button flex items-center">
-                                <i class="fab fa-whatsapp mr-2"></i> Enviar Mensaje de Reserva
-                            </a>
-                        </div>
-                    `);
-                    form.reset(); // Limpiar formulario
-                } else {
-                    showModal('Aviso', 'No se pudieron reservar las tablas. Se agotaron justo ahora.');
-                }
-            } catch (error) {
-                console.error("Error al procesar reserva:", error);
-                showModal('Error al Reservar', `Hubo un problema: ${error.message}.`);
-            }
-        };
-
-        /**
-         * Genera el mensaje de WhatsApp con la información de la reserva.
-         */
-        const generateWhatsappMessage = (name, phone, quantity, numbersList) => {
-            const now = new Date().toLocaleString('es-ES', { timeZone: 'America/Caracas' });
-            return `¡Hola! Quiero reservar ${quantity} tablas para el Bingo.\n\n` +
-                   `👤 *Nombre:* ${name}\n` +
-                   `📱 *Teléfono:* ${phone}\n` +
-                   `🔖 *Números Reservados:* ${numbersList}\n\n` +
-                   `💸 *Pago:* El costo es ${configData.price} por cartón/tabla.\n` +
-                   `🕒 *Hora de Reserva:* ${now}\n` +
-                   `⚠️ *Importante:* Mi reserva está PENDIENTE DE PAGO. Por favor, confírmame los datos para transferir.`;
-        };
-
-        // --- Funciones de Interacción del Administrador ---
-
-        /**
-         * Maneja el guardado de la configuración del administrador.
-         */
-        const handleSaveConfig = async () => {
-            const price = document.getElementById('config-price').value.trim();
-            const info = document.getElementById('config-info').value.trim();
-            const adminWhatsapp = document.getElementById('config-admin-whatsapp').value.trim().replace(/[^0-9]/g, '');
-            // Leer el nuevo valor de total de tablas
-            const totalTablesStr = document.getElementById('config-cards').value.trim();
-            const totalTables = parseInt(totalTablesStr, 10);
-
-
-            if (!price || !info || adminWhatsapp.length < 7) {
-                showModal('Error', 'Debe completar Precio, Información de Pago y Teléfono de WhatsApp del Admin.');
-                return;
-            }
-            
-            // Validación del nuevo total de tablas
-            if (isNaN(totalTables) || totalTables < 1 || totalTables > NUM_HARD_LIMIT) {
-                 showModal('Error', `La Cantidad Total de Tablas debe ser un número entre 1 y ${NUM_HARD_LIMIT}.`);
+            if (isNaN(cantidadTotalTablas) || cantidadTotalTablas <= 0) {
+                 showMessage("Error de Validación", "La cantidad total de tablas debe ser un número entero mayor a 0.", true);
                  return;
             }
 
+            const configData = {
+                costoTabla: document.getElementById('costo-tabla').value,
+                whatsappAdmin: document.getElementById('whatsapp-admin').value,
+                infoPagoReglas: document.getElementById('info-pago-reglas').value,
+                cantidadTotalTablas: cantidadTotalTablas,
+                timestamp: new Date().toISOString()
+            };
 
             try {
-                const configRef = doc(db, CONFIG_DOC_PATH);
-                await setDoc(configRef, { 
-                    price: price, 
-                    paymentInfo: info, 
-                    adminWhatsapp: adminWhatsapp,
-                    totalTables: totalTables // Guardar el nuevo valor
-                }, { merge: true });
-                showModal('Éxito', `Configuración guardada correctamente. El número de tablas activas es ahora ${totalTables}.`);
+                // Ruta de escritura: /artifacts/{appId}/users/{userId}/config/main
+                const configPath = `/artifacts/${appId}/users/${userId}/config/main`;
+                await setDoc(doc(db, configPath), configData);
+                
+                showMessage("Éxito", "Configuración guardada correctamente.", false);
             } catch (error) {
                 console.error("Error al guardar configuración:", error);
-                showModal('Error', `Error al guardar configuración: ${error.message}`);
+                // Este error indica un fallo en las Reglas de Escritura
+                showMessage("Error al Guardar", "Ocurrió un error al guardar. Esto se debe a un fallo en las Reglas de Seguridad de Firestore. Asegúrate de haber publicado la regla de 30 días. Mensaje: " + error.message, true);
             }
-        };
-
-        /**
-         * Confirma el pago de los números seleccionados (los marca como VENDIDO).
-         */
-        const handleConfirmSale = async () => {
-            if (adminSelectedNumbers.size === 0) return;
-            const numbers = Array.from(adminSelectedNumbers);
-            try {
-                await updateNumberStatus(numbers, STATE.SOLD);
-                showModal('Venta Confirmada', `Las tablas ${numbers.join(', ')} se han marcado como VENDIDO.`);
-            } catch (error) {
-                console.error("Error al confirmar venta:", error);
-                showModal('Error', `No se pudo confirmar la venta: ${error.message}`);
-            }
-        };
-
-        /**
-         * Libera los números seleccionados (los marca como DISPONIBLE).
-         */
-        const handleLiberateNumbers = async () => {
-            if (adminSelectedNumbers.size === 0) return;
-            const numbers = Array.from(adminSelectedNumbers);
-
-            // Filtra solo los números que están RESERVADO o VENDIDO para liberar
-            const validNumbers = numbers.filter(num => numberData[num]?.status !== STATE.AVAILABLE);
-
-            if (validNumbers.length === 0) {
-                 showModal('Aviso', 'Solo se pueden liberar tablas RESERVADAS o VENDIDAS.');
-                 return;
-            }
-
-            try {
-                await updateNumberStatus(validNumbers, STATE.AVAILABLE);
-                showModal('Tablas Liberadas', `Las tablas ${validNumbers.join(', ')} se han liberado y están de nuevo DISPONIBLES.`);
-            } catch (error) {
-                console.error("Error al liberar números:", error);
-                showModal('Error', `No se pudo liberar las tablas: ${error.message}`);
-            }
-        };
-
-        /**
-         * Copia la lista de números seleccionados en formato WhatsApp para el admin.
-         */
-        const copyAdminList = () => {
-            const selectedNums = Array.from(adminSelectedNumbers).sort((a, b) => parseInt(a) - parseInt(b));
-            if (selectedNums.length === 0) {
-                showModal('Aviso', 'Seleccione al menos un número para copiar.');
-                return;
-            }
-
-            const details = selectedNums.map(num => {
-                const data = numberData[num];
-                const status = data.status;
-                const reservedBy = data.reservedBy || 'N/A';
-                const phone = data.phone || 'N/A';
-                const timestamp = data.timestamp ? new Date(data.timestamp).toLocaleString('es-ES') : 'N/A';
-                return `*Tabla:* ${num} | *Estado:* ${status} | *Cliente:* ${reservedBy} | *Teléfono:* ${phone} | *Reserva:* ${timestamp}`;
-            }).join('\n');
-
-            const textToCopy = `📋 *Reporte de Tablas Seleccionadas (${selectedNums.length}):*\n\n${details}`;
-
-            // Copiar al portapapeles
-            const tempInput = document.createElement("textarea");
-            tempInput.value = textToCopy;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-
-            showModal('Copiado', `Se ha copiado la información detallada de ${selectedNums.length} tablas al portapapeles.`);
         }
-
-
-        // --- Funciones Utilitarias (Modal) ---
-
-        /**
-         * Muestra el modal de mensaje personalizado.
-         */
-        const showModal = (title, message) => {
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-body').innerHTML = message;
-            document.getElementById('custom-modal').style.display = 'flex';
-        };
-
-        /**
-         * Cierra el modal de mensaje.
-         */
-        const closeModal = () => {
-            document.getElementById('custom-modal').style.display = 'none';
-        };
         
-        /**
-         * Cierra el modal de la tabla.
-         */
-        const closeTableModal = () => {
-            document.getElementById('table-modal').style.display = 'none';
-        }
-
-
-        // --- Inicialización de Eventos ---
-
-        window.onload = () => {
-            initializeFirebase();
-            document.getElementById('reservation-form').addEventListener('submit', handlePlayerReserve);
-            document.getElementById('admin-save-config').addEventListener('click', handleSaveConfig);
-            document.getElementById('admin-confirm-sale').addEventListener('click', handleConfirmSale);
-            document.getElementById('admin-liberate-numbers').addEventListener('click', handleLiberateNumbers);
-            document.getElementById('admin-copy-list').addEventListener('click', copyAdminList);
-            document.getElementById('modal-close-button').addEventListener('click', closeModal);
-            document.getElementById('modal-overlay-close').addEventListener('click', closeModal);
-            document.getElementById('table-modal-close-button').addEventListener('click', closeTableModal);
-            document.getElementById('table-modal-overlay-close').addEventListener('click', closeTableModal);
-        };
-
-        window.closeModal = closeModal;
-        window.closeTableModal = closeTableModal;
-        window.handleViewTable = handleViewTable; // Exponer para la grilla
+        // Iniciar la aplicación al cargar la ventana
+        window.onload = initializeFirebase;
+        
     </script>
-</head>
-
-<body class="p-4 sm:p-8">
-    
-    <!-- Modal de Mensaje General -->
-    <div id="custom-modal" class="modal-overlay z-[60]">
-        <div id="modal-overlay-close" class="absolute w-full h-full"></div>
-        <div class="info-card max-w-lg w-full z-10 p-6">
-            <h2 id="modal-title" class="text-2xl font-bold text-primary-purple mb-4">Título</h2>
-            <div id="modal-body" class="mb-6 text-gray-700">Contenido del mensaje.</div>
-            <div class="flex justify-end">
-                <button id="modal-close-button" class="bg-primary-purple text-white py-2 px-4 rounded-lg font-semibold hover:bg-opacity-80 transition">
-                    Cerrar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Visualización de Tabla -->
-    <div id="table-modal" class="modal-overlay z-[70]">
-        <div id="table-modal-overlay-close" class="absolute w-full h-full"></div>
-        <div class="max-w-4xl w-full z-10 p-4 bg-white rounded-xl shadow-2xl relative">
-            <button onclick="closeTableModal()" class="absolute top-3 right-3 text-primary-purple text-3xl font-bold p-2 leading-none hover:text-red-500 transition">
-                &times;
-            </button>
-            
-            <div class="text-center mb-4">
-                <h2 id="modal-table-title" class="text-2xl font-black text-primary-purple">Tabla ## - DISPONIBLE</h2>
-                <p id="modal-table-description" class="text-gray-600 text-sm italic">Descripción del estado y cliente.</p>
-            </div>
-
-            <div class="flex justify-center mb-4">
-                <img id="table-image" src="" alt="Imagen de la Tabla de Bingo" class="border-4 border-secondary-yellow">
-            </div>
-
-            <div class="flex justify-center">
-                <button id="modal-download-button" class="bg-primary-purple text-white py-2 px-4 rounded-lg font-semibold hover:bg-opacity-80 transition flex items-center">
-                    <i class="fas fa-download mr-2"></i> Descargar Tabla
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Contenedor principal de la aplicación -->
-    <main class="max-w-4xl mx-auto">
-        <!-- Título principal -->
-        <header class="text-center mb-6 p-4 rounded-xl bg-secondary-yellow text-primary-purple shadow-xl">
-            <h1 class="text-3xl sm:text-4xl font-black uppercase">
-                <i class="fas fa-table mr-2"></i> Reserva de Tablas OMEGA Bingo
-            </h1>
-            <p class="text-sm font-semibold mt-1">Total de Tablas disponibles: <span id="display-available-cards" class="font-black text-xl">--</span></p>
-        </header>
-
-        <!-- Mensaje de estado (Conexión) -->
-        <p id="status-message" class="text-center text-secondary-yellow text-sm mb-4">Cargando datos en tiempo real...</p>
-
-        <!-- Selector de Vistas -->
-        <div class="flex justify-center mb-6 space-x-4">
-            <button onclick="document.getElementById('player-view').style.display='block'; document.getElementById('admin-view').style.display='none';" class="py-2 px-4 rounded-lg font-semibold bg-primary-purple text-white hover:opacity-80 transition">
-                <i class="fas fa-user-friends"></i> Vista del Jugador
-            </button>
-            <button onclick="document.getElementById('player-view').style.display='none'; document.getElementById('admin-view').style.display='block';" class="py-2 px-4 rounded-lg font-semibold bg-secondary-yellow text-primary-purple hover:opacity-80 transition">
-                <i class="fas fa-user-shield"></i> Panel de Administración
-            </button>
-        </div>
-
-        <!-- VISTA DEL JUGADOR (RESERVA) -->
-        <section id="player-view" class="space-y-6">
-
-            <!-- Información de Pago y Precio -->
-            <div class="info-card">
-                <h2 class="text-2xl font-bold text-primary-purple mb-4 flex items-center">
-                    <i class="fas fa-money-bill-wave mr-2"></i> Costo y Pago
-                </h2>
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 mb-3">
-                    <p class="text-lg font-semibold text-gray-600">Costo de la Tabla:</p>
-                    <p id="display-price" class="text-2xl font-black text-secondary-yellow bg-primary-purple px-3 py-1 rounded-lg">Cargando...</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-primary-purple mb-2">Datos para Reserva y Pago:</h3>
-                    <pre id="display-info" class="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap">Cargando información...</pre>
-                </div>
-            </div>
-
-            <!-- Formulario de Reserva -->
-            <div class="info-card">
-                <h2 class="text-2xl font-bold text-primary-purple mb-4 flex items-center">
-                    <i class="fas fa-edit mr-2"></i> Formulario de Reserva
-                </h2>
-                <form id="reservation-form" class="space-y-4">
-                    <input type="text" name="name" placeholder="Nombre Completo del Jugador" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary-purple focus:border-primary-purple transition">
-                    <input type="tel" name="phone" placeholder="Número de Teléfono / WhatsApp (Ej: 04121234567)" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary-purple focus:border-primary-purple transition">
-                    <input type="number" name="quantity" min="1" max="75" placeholder="Cantidad de Tablas a Reservar (Máx 75)" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary-purple focus:border-primary-purple transition">
-
-                    <button type="submit" class="w-full primary-button uppercase">
-                        <i class="fas fa-lock mr-2"></i> Reservar y Coordinar Pago
-                    </button>
-                </form>
-            </div>
-
-            <!-- Grilla de Números Disponibles -->
-            <div class="info-card">
-                <h2 class="text-2xl font-bold text-primary-purple mb-4 flex items-center">
-                    <i class="fas fa-list-ol mr-2"></i> Estado de Tablas (01 - <span id="range-display-player">{{NUM_RANGE}}</span>). Toca para ver la tabla.
-                </h2>
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-4 p-3 rounded-lg border">
-                    <div class="flex items-center text-sm font-semibold text-available"><span class="w-3 h-3 rounded-full bg-available mr-2"></span>DISPONIBLE (<span id="available-count">00</span>)</div>
-                    <div class="flex items-center text-sm font-semibold text-reserved"><span class="w-3 h-3 rounded-full bg-reserved mr-2"></span>RESERVADO (<span id="reserved-count">00</span>)</div>
-                    <div class="flex items-center text-sm font-semibold text-sold"><span class="w-3 h-3 rounded-full bg-sold mr-2"></span>VENDIDO (<span id="sold-count">00</span>)</div>
-                </div>
-
-                <div id="number-grid" class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1 text-center border p-2 rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
-                    <!-- Las tablas se renderizan aquí -->
-                </div>
-            </div>
-        </section>
-
-
-        <!-- VISTA DE ADMINISTRACIÓN -->
-        <section id="admin-view" class="space-y-6 hidden">
-            <div class="info-card bg-primary-purple text-white">
-                <h2 class="text-2xl font-bold mb-2 flex items-center">
-                    <i class="fas fa-cogs mr-2"></i> Panel de Administración
-                </h2>
-                <p id="admin-id" class="text-sm italic opacity-75">Admin ID: Cargando...</p>
-            </div>
-
-            <!-- Configuración General -->
-            <div class="info-card">
-                <h3 class="text-xl font-bold text-primary-purple mb-4">Configuración General</h3>
-                <div class="space-y-4">
-                    <label class="block">
-                        <span class="text-gray-700 font-semibold">Costo de la Tabla (Ej: 300,00 Bs):</span>
-                        <input type="text" id="config-price" class="w-full p-3 border border-gray-300 rounded-lg mt-1" value="">
-                    </label>
-                    <label class="block">
-                        <span class="text-gray-700 font-semibold">WhatsApp del Administrador (Solo números, con código de país. Ej: 584121234567):</span>
-                        <input type="tel" id="config-admin-whatsapp" class="w-full p-3 border border-gray-300 rounded-lg mt-1" placeholder="Ej: 584121234567" value="">
-                    </label>
-                    <label class="block">
-                        <span class="text-gray-700 font-semibold">Información de Pago y Reglas (se mostrará al jugador):</span>
-                        <textarea id="config-info" rows="5" class="w-full p-3 border border-gray-300 rounded-lg mt-1 resize-none"></textarea>
-                    </label>
-                    <!-- CAMBIO: Campo de Cantidad de Tablas ahora es editable -->
-                    <label class="block">
-                        <span class="text-gray-700 font-semibold">Cantidad Total de Tablas Activas (Máx 75):</span>
-                        <input type="number" id="config-cards" 
-                               min="1" 
-                               max="75"
-                               placeholder="1 a 75"
-                               class="w-full p-3 border border-gray-300 rounded-lg mt-1 transition">
-                        <p class="text-xs mt-1 text-gray-500">
-                            Establece el número máximo de tablas (desde 01) que estarán activas y visibles. El sistema base admite hasta 75 tablas.
-                        </p>
-                    </label>
-                    <!-- FIN DEL CAMBIO -->
-                    <button id="admin-save-config" class="w-full bg-primary-purple text-white py-3 rounded-lg font-semibold hover:bg-opacity-80 transition">
-                        <i class="fas fa-save mr-2"></i> Guardar Configuración
-                    </button>
-                </div>
-            </div>
-
-            <!-- Grilla y Acciones de Gestión -->
-            <div class="info-card">
-                <h3 class="text-xl font-bold text-primary-purple mb-4">Gestión de Reservas (Ctrl + Clic para seleccionar múltiples)</h3>
-
-                <!-- Estado de Selección -->
-                <div class="mb-4 p-3 border border-secondary-yellow bg-yellow-50 rounded-lg">
-                    <p class="font-semibold text-lg text-primary-purple">Tablas Seleccionadas: <span id="selected-count" class="text-2xl font-black">0</span></p>
-                    <p id="admin-selected-numbers" class="text-sm italic text-gray-600 truncate">Ninguno</p>
-                </div>
-
-                <!-- Botones de Acción -->
-                <div id="admin-actions" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-                    <button id="admin-confirm-sale" disabled class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50 text-sm">
-                        <i class="fas fa-check-circle mr-1"></i> Confirmar Venta (Vendido)
-                    </button>
-                    <button id="admin-liberate-numbers" disabled class="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-50 text-sm">
-                        <i class="fas fa-trash-alt mr-1"></i> Liberar Tablas (Disponible)
-                    </button>
-                    <button id="admin-copy-list" disabled class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 text-sm">
-                        <i class="fas fa-copy mr-1"></i> Copiar Info Detallada
-                    </button>
-                </div>
-
-                <!-- Grilla de Administración -->
-                <div id="admin-grid" class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1 text-center border p-2 rounded-lg bg-gray-50 max-h-[500px] overflow-y-auto">
-                    <!-- Las tablas se renderizan aquí. Toca para ver la tabla, Ctrl+Clic para seleccionar. -->
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="text-center text-xs text-gray-400 mt-8 mb-4">
-        &copy; 2025 Sistema de Reservas. Desarrollado con Firebase y Tailwind.<br>
-        <span class="text-secondary-yellow font-bold">Masson© todos los derechos reservados.</span>
-    </footer>
 </body>
 </html>
 
