@@ -157,7 +157,8 @@
             SOLD: 'VENDIDO'
         };
 
-        const NUM_RANGE = 75; // Cantidad total de tablas
+        const NUM_HARD_LIMIT = 75; // Límite máximo de tablas que se inicializan en el código.
+        let NUM_RANGE = NUM_HARD_LIMIT; // Cantidad total de tablas (configurable en Admin)
         const NUMBERS_PER_CARD = 4; // Cantidad de números por cartón (no usado aquí pero mantenido)
 
         // --- Configuración y Rutas de Firestore ---
@@ -218,7 +219,8 @@
         let numberData = {};
         let configData = { 
             price: '300,00 Bs', 
-            availableCards: NUM_RANGE, 
+            availableCards: NUM_RANGE, // Este campo es redundante, lo calcula la función de renderizado
+            totalTables: NUM_HARD_LIMIT, // Nuevo campo configurable
             paymentInfo: 'Banco: 0108 (Provincial BBVA), Cédula: V25822059, Teléfono: 04129546751. Tienes 30 minutos para pagar.',
             adminWhatsapp: '' 
         };
@@ -229,12 +231,14 @@
         /**
          * Inicializa la estructura de la base de datos si es la primera vez.
          * Crea documentos para todos los números (01 al 75) como DISPONIBLE.
+         * NOTA: Esta función DEBE ejecutarse solo una vez para crear la colección base.
          */
-        const initializeNumbers = async () => {
+        const initializeNumbers = async (numLimit) => {
             const batch = db.batch();
-            for (let i = 1; i <= NUM_RANGE; i++) {
+            for (let i = 1; i <= numLimit; i++) {
                 const numStr = i.toString().padStart(2, '0');
                 const numRef = doc(db, PUBLIC_COLLECTION_PATH, numStr);
+                // Usamos set con merge true para no sobreescribir si ya existe, pero asegurando el estado inicial
                 batch.set(numRef, {
                     number: numStr,
                     status: STATE.AVAILABLE,
@@ -242,10 +246,10 @@
                     phone: null,
                     timestamp: null,
                     tableUrl: getTableImageUrl(numStr) // Guarda la URL/Ruta de la tabla
-                });
+                }, { merge: true });
             }
             await batch.commit();
-            console.log("Números inicializados a DISPONIBLE.");
+            console.log(`Números inicializados a DISPONIBLE hasta el ${numLimit}.`);
         };
 
         /**
@@ -264,8 +268,10 @@
             const timestamp = new Date();
 
             await runTransaction(db, async (transaction) => {
-                // 1. Encontrar números DISPONIBLES
-                const availableNumbers = Object.values(numberData).filter(n => n.status === STATE.AVAILABLE);
+                // 1. Encontrar números DISPONIBLES dentro del rango activo (NUM_RANGE)
+                const availableNumbers = Object.values(numberData)
+                    .filter(n => n.status === STATE.AVAILABLE && parseInt(n.number) <= NUM_RANGE);
+                
                 if (availableNumbers.length < quantity) {
                     throw new Error(`Solo quedan ${availableNumbers.length} tablas disponibles.`);
                 }
@@ -337,11 +343,14 @@
             let reservedCount = 0;
             let soldCount = 0;
 
-            const sortedNumbers = Object.values(numberData).sort((a, b) => parseInt(a.number) - parseInt(b.number));
+            // Usamos NUM_RANGE para determinar hasta dónde renderizar
+            const numbersToRender = Object.values(numberData)
+                .filter(item => parseInt(item.number) <= NUM_RANGE)
+                .sort((a, b) => parseInt(a.number) - parseInt(b.number));
 
-            sortedNumbers.forEach(item => {
+            numbersToRender.forEach(item => {
                 const numStr = item.number;
-                const status = item.status;
+                const status = item.status || STATE.AVAILABLE; // Usar AVAILABLE si no hay estado
                 const isSelected = adminSelectedNumbers.has(numStr);
                 const clientName = item.reservedBy ? item.reservedBy.split(' ')[0] : '';
                 
@@ -512,7 +521,10 @@
             document.getElementById('config-price').value = configData.price;
             document.getElementById('config-info').value = configData.paymentInfo;
             document.getElementById('config-admin-whatsapp').value = configData.adminWhatsapp || '';
-            document.getElementById('config-cards').value = NUM_RANGE;
+            // El valor del total de tablas ahora se carga desde configData
+            document.getElementById('config-cards').value = configData.totalTables || NUM_HARD_LIMIT; 
+            // Actualizar el rango visible en la vista del jugador (aunque no está en el HTML original, lo añado por si acaso)
+            // document.getElementById('range-display-player').textContent = NUM_RANGE;
         };
 
         // --- Listeners de Firestore ---
@@ -522,7 +534,17 @@
             onSnapshot(doc(db, CONFIG_DOC_PATH), (docSnap) => {
                 if (docSnap.exists()) {
                     configData = docSnap.data();
+                    // Actualizar NUM_RANGE si el valor en DB es válido
+                    const newRange = parseInt(configData.totalTables);
+                    if (!isNaN(newRange) && newRange > 0 && newRange <= NUM_HARD_LIMIT) {
+                        NUM_RANGE = newRange;
+                    } else {
+                        NUM_RANGE = NUM_HARD_LIMIT;
+                    }
+
                     renderConfig();
+                    // Volver a renderizar la lista si el rango activo cambia
+                    renderNumberList();
                 } else {
                     console.log("Documento de configuración no encontrado. Inicializando.");
                     initializeConfig();
@@ -534,7 +556,9 @@
             onSnapshot(q, async (snapshot) => {
                 let allNumbersExist = true;
                 const expectedNumbers = new Set();
-                for (let i = 1; i <= NUM_RANGE; i++) {
+                
+                // Solo esperar números hasta NUM_HARD_LIMIT para chequear la inicialización
+                for (let i = 1; i <= NUM_HARD_LIMIT; i++) {
                     expectedNumbers.add(i.toString().padStart(2, '0'));
                 }
                 
@@ -544,10 +568,11 @@
                     expectedNumbers.delete(doc.id);
                 });
 
-                if (expectedNumbers.size > 0 || snapshot.empty) {
-                    // Si faltan números o está vacía, inicializar la estructura completa
-                    console.warn(`Faltan ${expectedNumbers.size} números. Inicializando o actualizando estructura.`);
-                    await initializeNumbers();
+                // Inicializar solo si faltan todos los números (colección vacía)
+                if (snapshot.empty) {
+                    // Si está vacía, inicializar la estructura completa con el límite fijo
+                    console.warn(`Colección de números vacía. Inicializando estructura.`);
+                    await initializeNumbers(NUM_HARD_LIMIT);
                     return; // onSnapshot se volverá a llamar con los datos inicializados
                 }
 
@@ -568,7 +593,8 @@
             const phone = form.phone.value.trim().replace(/[^0-9]/g, '');
             const quantity = parseInt(form.quantity.value, 10);
             
-            const availableCount = Object.values(numberData).filter(n => n.status === STATE.AVAILABLE).length;
+            // Filtrar disponibles solo hasta el NUM_RANGE activo
+            const availableCount = Object.values(numberData).filter(n => n.status === STATE.AVAILABLE && parseInt(n.number) <= NUM_RANGE).length;
 
             if (!name || !phone || quantity <= 0 || quantity > availableCount) {
                 showModal('Error', `Por favor, complete todos los campos correctamente. Cantidad máxima disponible: ${availableCount}`);
@@ -628,16 +654,32 @@
             const price = document.getElementById('config-price').value.trim();
             const info = document.getElementById('config-info').value.trim();
             const adminWhatsapp = document.getElementById('config-admin-whatsapp').value.trim().replace(/[^0-9]/g, '');
+            // Leer el nuevo valor de total de tablas
+            const totalTablesStr = document.getElementById('config-cards').value.trim();
+            const totalTables = parseInt(totalTablesStr, 10);
+
 
             if (!price || !info || adminWhatsapp.length < 7) {
                 showModal('Error', 'Debe completar Precio, Información de Pago y Teléfono de WhatsApp del Admin.');
                 return;
             }
+            
+            // Validación del nuevo total de tablas
+            if (isNaN(totalTables) || totalTables < 1 || totalTables > NUM_HARD_LIMIT) {
+                 showModal('Error', `La Cantidad Total de Tablas debe ser un número entre 1 y ${NUM_HARD_LIMIT}.`);
+                 return;
+            }
+
 
             try {
                 const configRef = doc(db, CONFIG_DOC_PATH);
-                await setDoc(configRef, { price: price, paymentInfo: info, adminWhatsapp: adminWhatsapp }, { merge: true });
-                showModal('Éxito', 'Configuración guardada correctamente.');
+                await setDoc(configRef, { 
+                    price: price, 
+                    paymentInfo: info, 
+                    adminWhatsapp: adminWhatsapp,
+                    totalTables: totalTables // Guardar el nuevo valor
+                }, { merge: true });
+                showModal('Éxito', `Configuración guardada correctamente. El número de tablas activas es ahora ${totalTables}.`);
             } catch (error) {
                 console.error("Error al guardar configuración:", error);
                 showModal('Error', `Error al guardar configuración: ${error.message}`);
@@ -864,7 +906,7 @@
             <!-- Grilla de Números Disponibles -->
             <div class="info-card">
                 <h2 class="text-2xl font-bold text-primary-purple mb-4 flex items-center">
-                    <i class="fas fa-list-ol mr-2"></i> Estado de Tablas (01 - 75). Toca para ver la tabla.
+                    <i class="fas fa-list-ol mr-2"></i> Estado de Tablas (01 - <span id="range-display-player">{{NUM_RANGE}}</span>). Toca para ver la tabla.
                 </h2>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-4 p-3 rounded-lg border">
                     <div class="flex items-center text-sm font-semibold text-available"><span class="w-3 h-3 rounded-full bg-available mr-2"></span>DISPONIBLE (<span id="available-count">00</span>)</div>
@@ -904,11 +946,19 @@
                         <span class="text-gray-700 font-semibold">Información de Pago y Reglas (se mostrará al jugador):</span>
                         <textarea id="config-info" rows="5" class="w-full p-3 border border-gray-300 rounded-lg mt-1 resize-none"></textarea>
                     </label>
-                    <label class="block text-gray-500">
-                        <span class="text-gray-700 font-semibold">Cantidad Total de Tablas:</span>
-                        <input type="text" id="config-cards" class="w-full p-3 border border-gray-300 rounded-lg mt-1 bg-gray-100" readonly>
-                        <p class="text-xs mt-1">Este valor es fijo (01 al 75).</p>
+                    <!-- CAMBIO: Campo de Cantidad de Tablas ahora es editable -->
+                    <label class="block">
+                        <span class="text-gray-700 font-semibold">Cantidad Total de Tablas Activas (Máx 75):</span>
+                        <input type="number" id="config-cards" 
+                               min="1" 
+                               max="75"
+                               placeholder="1 a 75"
+                               class="w-full p-3 border border-gray-300 rounded-lg mt-1 transition">
+                        <p class="text-xs mt-1 text-gray-500">
+                            Establece el número máximo de tablas (desde 01) que estarán activas y visibles. El sistema base admite hasta 75 tablas.
+                        </p>
                     </label>
+                    <!-- FIN DEL CAMBIO -->
                     <button id="admin-save-config" class="w-full bg-primary-purple text-white py-3 rounded-lg font-semibold hover:bg-opacity-80 transition">
                         <i class="fas fa-save mr-2"></i> Guardar Configuración
                     </button>
