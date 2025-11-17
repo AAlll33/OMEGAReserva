@@ -50,9 +50,14 @@
             font-weight: 700;
             box-shadow: 0 4px 15px rgba(91, 33, 179, 0.4);
         }
-        .btn-save-config:hover {
+        .btn-save-config:hover:not(:disabled) {
             background-color: #4c1d95;
         }
+        .btn-save-config:disabled {
+            background-color: #a78bfa; /* Morado claro cuando está deshabilitado */
+            cursor: not-allowed;
+        }
+
         /* Estilo del Header Amarillo */
         header {
             background-color: var(--color-secondary);
@@ -90,6 +95,20 @@
         .bg-yellow-100 { background-color: #fef3c7; }
         .text-yellow-800 { color: #92400e; }
 
+        /* Estilo para el spinner de carga */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--color-secondary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
     </style>
 </head>
 <body class="p-4">
@@ -102,6 +121,12 @@
     <!-- Error de Conexión (visible si falla) -->
     <div id="connection-error" class="hidden bg-red-500 text-white p-3 rounded-lg mb-4 text-sm font-semibold text-center">
         Error de conexión: Por favor, revisa la configuración de Firebase en el código.
+    </div>
+    
+    <!-- Mensaje de Carga (Se oculta al conectar con Firebase) -->
+    <div id="loading-indicator" class="bg-yellow-100 text-yellow-800 p-3 rounded-lg mb-4 text-sm font-semibold text-center flex items-center justify-center space-x-2">
+        <div class="loader"></div>
+        <span>Conectando con Firebase... Por favor, espere.</span>
     </div>
 
     <!-- Panel de Administración - Botones de Navegación -->
@@ -144,7 +169,7 @@
             <input type="number" id="cantidad-total-tablas" value="75" min="1" max="75" class="w-full p-2 border border-purple-300 rounded-lg mb-1 focus:ring-purple-500 focus:border-purple-500">
             <p class="text-xs text-gray-500 mb-4">Establece el número máximo de tablas (desde 01) que estarán activas y visibles. El sistema base admite hasta 75 tablas.</p>
             
-            <button onclick="guardarConfiguracion()" class="btn-save-config w-full transition duration-300">
+            <button onclick="guardarConfiguracion()" id="btn-guardar-configuracion" class="btn-save-config w-full transition duration-300" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7z" /><path fill-rule="evenodd" d="M18 8v5a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2zM3.75 9A.75.75 0 003 9.75v1.5a.75.75 0 00.75.75h1.5A.75.75 0 006 11.25v-1.5A.75.75 0 005.25 9h-1.5z" clip-rule="evenodd" /></svg>
                 Guardar Configuración
             </button>
@@ -192,12 +217,17 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // setLogLevel('Debug'); // Deja esta línea comentada o descoméntala si necesitas ver logs detallados
-        
+        setLogLevel('Debug'); // <--- DESCOMENTADO para ayudar a depurar la conexión
+
         let db, auth;
         let userId = null;
         let isAuthReady = false;
 
+        // --- Elementos de UI ---
+        const btnGuardar = document.getElementById('btn-guardar-configuracion');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const connectionError = document.getElementById('connection-error');
+        
         // --- Manejo del Modal de Mensajes ---
         const modal = document.getElementById('app-modal');
         const modalTitle = document.getElementById('modal-title');
@@ -211,32 +241,23 @@
             modal.style.display = 'flex';
         }
         
-        // =========================================================================
-        // ✅ CORRECCIÓN CRÍTICA DE CONFIGURACIÓN DE FIREBASE ✅
-        // 
-        // Eliminamos la configuración hardcodeada (API keys) y usamos las variables 
-        // globales proporcionadas de forma segura por el entorno Canvas.
-        // =========================================================================
-        
-        // Las variables __firebase_config y __initial_auth_token son MANDATORIAS
+        // --- Configuración de Firebase (variables de entorno seguras) ---
         const runtimeFirebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
-            : {}; // Fallback si no está en Canvas
+            : {}; 
 
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
         
-        // =========================================================================
-        // ⬆️ ESTE BLOQUE SOLUCIONA LOS ERRORES DE CONEXIÓN Y SEGURIDAD ⬆️
-        // =========================================================================
-
-
         // --- Inicialización de Firebase y Autenticación ---
         async function initializeFirebase() {
+            // Deshabilitar botón al inicio para evitar el error de "no está lista"
+            btnGuardar.disabled = true;
+
             try {
                 if (Object.keys(runtimeFirebaseConfig).length === 0) {
                      showMessage("Error Crítico", "La configuración de Firebase no está disponible. Asegúrate de estar en el entorno Canvas.", true);
-                     document.getElementById('connection-error').classList.remove('hidden');
+                     connectionError.classList.remove('hidden');
                      return;
                 }
                 
@@ -254,14 +275,15 @@
                 
                 // 3. Listener de Estado de Autenticación
                 onAuthStateChanged(auth, (user) => {
-                    isAuthReady = true;
+                    isAuthReady = true; // <--- Bandera de listo activada aquí
+                    loadingIndicator.classList.add('hidden'); // <--- Ocultar carga
+                    btnGuardar.disabled = false; // <--- Habilitar el botón de guardar
+
                     if (user) {
                         userId = user.uid;
                         document.getElementById('admin-id').textContent = 'Admin ID: ' + userId;
-                        // Una vez autenticado, iniciamos la escucha de datos
                         loadConfigAndReservations();
                     } else {
-                        // Esto solo ocurre si signInAnonymously falla, pero es un buen fallback
                         userId = crypto.randomUUID();
                         document.getElementById('admin-id').textContent = 'Admin ID: (Anon) ' + userId.substring(0, 8) + '...';
                         loadConfigAndReservations();
@@ -270,19 +292,19 @@
 
             } catch (error) {
                 console.error("Error al inicializar Firebase o autenticar:", error);
-                document.getElementById('connection-error').classList.remove('hidden');
-                document.getElementById('connection-error').textContent = `Error de conexión: ${error.message}. Verifica las Reglas de Seguridad.`;
+                loadingIndicator.classList.add('hidden');
+                connectionError.classList.remove('hidden');
+                connectionError.textContent = `Error de conexión: ${error.message}. Verifica las Reglas de Seguridad.`;
                 showMessage("Error Crítico de Firebase", "No se pudo conectar. Por favor, revisa la consola para ver el error de Firebase. Mensaje: " + error.message, true);
             }
         }
 
         // --- Lógica de Carga de Datos (onSnapshot) ---
         function loadConfigAndReservations() {
-            // Guard clause: Evita llamadas a Firestore si aún no está inicializado o autenticado
-            if (!db || !userId || !isAuthReady) return; 
+            // Ya no es necesario el chequeo 'if (!db || !userId || !isAuthReady) return;' aquí, 
+            // ya que se llama DENTRO de onAuthStateChanged.
             
-            // 1. Ruta del documento de configuración (usando la estructura de datos privada)
-            // Estructura: /artifacts/{appId}/users/{userId}/config/main
+            // 1. Ruta del documento de configuración
             const configPath = `artifacts/${appId}/users/${userId}/config/main`;
             const configRef = doc(db, configPath);
 
@@ -305,14 +327,13 @@
                 console.error("Error al obtener la configuración (onSnapshot):", error);
                 showMessage("Error de Lectura", "Error al cargar la configuración. Revisa tus Reglas de Seguridad de Firestore.", true);
             });
-
-            // Nota: Aquí se implementaría la lógica para onSnapshot de las reservas.
         }
 
 
         // --- Lógica para Guardar Configuración (setDoc) ---
         window.guardarConfiguracion = async function() {
             if (!db || !userId || !isAuthReady) {
+                // Este mensaje solo debería salir si se intentó hacer trampa, pero lo mantenemos
                 showMessage("Error", "La conexión a Firebase no está lista.", true);
                 return;
             }
@@ -326,7 +347,8 @@
             }
 
             const configData = {
-                costoTabla: parseFloat(document.getElementById('costo-tabla').value) || 0,
+                // Usar parseFloat o String(value) dependiendo del tipo esperado
+                costoTabla: String(document.getElementById('costo-tabla').value),
                 whatsappAdmin: document.getElementById('whatsapp-admin').value,
                 infoPagoReglas: document.getElementById('info-pago-reglas').value,
                 cantidadTotalTablas: cantidadTotalTablas,
@@ -337,13 +359,12 @@
                 // Escritura: /artifacts/{appId}/users/{userId}/config/main
                 const configPath = `artifacts/${appId}/users/${userId}/config/main`;
                 
-                // La función doc(db, path) es la correcta para crear una referencia de documento.
                 await setDoc(doc(db, configPath), configData);
                 
                 showMessage("Éxito", "Configuración guardada correctamente.", false);
             } catch (error) {
                 console.error("Error al guardar configuración:", error);
-                showMessage("Error al Guardar", `Ocurrió un error al guardar. Posible fallo en las Reglas de Seguridad. Mensaje: ${error.message}`, true);
+                showMessage("Error al Guardar", `Ocurrió un error al guardar. Revisa la consola y las Reglas de Seguridad. Mensaje: ${error.message}`, true);
             }
         }
         
