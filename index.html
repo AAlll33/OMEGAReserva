@@ -192,7 +192,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // setLogLevel('Debug'); // Útil para depurar en la consola si el problema persiste
+        // setLogLevel('Debug'); // Deja esta línea comentada o descoméntala si necesitas ver logs detallados
         
         let db, auth;
         let userId = null;
@@ -212,39 +212,40 @@
         }
         
         // =========================================================================
-        // 🚨 COMIENZO DEL BLOQUE DE CONFIGURACIÓN CRÍTICA DE FIREBASE 🚨
-        // *** ESTOS SON LOS VALORES REALES DE TU PROYECTO 'omega-bingo-reserva' ***
+        // ✅ CORRECCIÓN CRÍTICA DE CONFIGURACIÓN DE FIREBASE ✅
+        // 
+        // Eliminamos la configuración hardcodeada (API keys) y usamos las variables 
+        // globales proporcionadas de forma segura por el entorno Canvas.
         // =========================================================================
         
-        const firebaseConfig = {
-          apiKey: "AIzaSyCz8dawYkkHh43mZWypWneYfUN9TmnUi4k",
-          authDomain: "omega-bingo-reserva.firebaseapp.com",
-          projectId: "omega-bingo-reserva",
-          storageBucket: "omega-bingo-reserva.firebasestorage.app",
-          messagingSenderId: "599243639956",
-          appId: "1:599243639956:web:e23034d8f0d692ae4bf881"
-        };
-        
-        // Usamos las variables globales proporcionadas por el entorno si existen, sino usamos los valores fijos.
-        // Esto asegura que la aplicación se conecte correctamente.
-        const runtimeFirebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig;
+        // Las variables __firebase_config y __initial_auth_token son MANDATORIAS
+        const runtimeFirebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {}; // Fallback si no está en Canvas
+
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : runtimeFirebaseConfig.appId; 
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
         
         // =========================================================================
-        // 🚨 FIN DEL BLOQUE DE CONFIGURACIÓN CRÍTICA DE FIREBASE 🚨
+        // ⬆️ ESTE BLOQUE SOLUCIONA LOS ERRORES DE CONEXIÓN Y SEGURIDAD ⬆️
         // =========================================================================
 
 
         // --- Inicialización de Firebase y Autenticación ---
         async function initializeFirebase() {
             try {
-                // 1. Inicializar Apps con la configuración correcta (runtime o fija)
+                if (Object.keys(runtimeFirebaseConfig).length === 0) {
+                     showMessage("Error Crítico", "La configuración de Firebase no está disponible. Asegúrate de estar en el entorno Canvas.", true);
+                     document.getElementById('connection-error').classList.remove('hidden');
+                     return;
+                }
+                
+                // 1. Inicializar App
                 const app = initializeApp(runtimeFirebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // 2. Autenticación
+                // 2. Autenticación (usando el token proporcionado o anónimo)
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
@@ -260,27 +261,29 @@
                         // Una vez autenticado, iniciamos la escucha de datos
                         loadConfigAndReservations();
                     } else {
-                        // Fallback, aunque con signInAnonymously siempre deberíamos tener un user
+                        // Esto solo ocurre si signInAnonymously falla, pero es un buen fallback
                         userId = crypto.randomUUID();
-                        document.getElementById('admin-id').textContent = 'Admin ID: (No autenticado) ' + userId.substring(0, 8) + '...';
+                        document.getElementById('admin-id').textContent = 'Admin ID: (Anon) ' + userId.substring(0, 8) + '...';
+                        loadConfigAndReservations();
                     }
                 });
 
             } catch (error) {
                 console.error("Error al inicializar Firebase o autenticar:", error);
                 document.getElementById('connection-error').classList.remove('hidden');
-                document.getElementById('connection-error').textContent = `Error de conexión: ${error.message}. ¡Verifica tu firebaseConfig!`;
-                showMessage("Error Crítico", "No se pudo conectar a Firebase. Por favor, revisa la configuración en tu código. Mensaje: " + error.message, true);
+                document.getElementById('connection-error').textContent = `Error de conexión: ${error.message}. Verifica las Reglas de Seguridad.`;
+                showMessage("Error Crítico de Firebase", "No se pudo conectar. Por favor, revisa la consola para ver el error de Firebase. Mensaje: " + error.message, true);
             }
         }
 
         // --- Lógica de Carga de Datos (onSnapshot) ---
         function loadConfigAndReservations() {
+            // Guard clause: Evita llamadas a Firestore si aún no está inicializado o autenticado
             if (!db || !userId || !isAuthReady) return; 
             
             // 1. Ruta del documento de configuración (usando la estructura de datos privada)
             // Estructura: /artifacts/{appId}/users/{userId}/config/main
-            const configPath = `/artifacts/${appId}/users/${userId}/config/main`;
+            const configPath = `artifacts/${appId}/users/${userId}/config/main`;
             const configRef = doc(db, configPath);
 
             // 2. Escucha en tiempo real de la configuración
@@ -288,10 +291,10 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     // Actualizar inputs con los datos de Firestore
-                    document.getElementById('costo-tabla').value = data.costoTabla || '';
+                    document.getElementById('costo-tabla').value = data.costoTabla || 0;
                     document.getElementById('whatsapp-admin').value = data.whatsappAdmin || '';
                     document.getElementById('info-pago-reglas').value = data.infoPagoReglas || '';
-                    document.getElementById('cantidad-total-tablas').value = data.cantidadTotalTablas || '75';
+                    document.getElementById('cantidad-total-tablas').value = data.cantidadTotalTablas || 75;
                     
                     document.getElementById('total-tablas-disponibles').textContent = `Total de Tablas disponibles: ${data.cantidadTotalTablas || '75'}`;
 
@@ -300,17 +303,17 @@
                 }
             }, (error) => {
                 console.error("Error al obtener la configuración (onSnapshot):", error);
-                // Si tienes problemas de lectura, vuelve a revisar las Reglas
+                showMessage("Error de Lectura", "Error al cargar la configuración. Revisa tus Reglas de Seguridad de Firestore.", true);
             });
 
             // Nota: Aquí se implementaría la lógica para onSnapshot de las reservas.
         }
 
 
-        // --- Lógica para Guardar Configuración ---
+        // --- Lógica para Guardar Configuración (setDoc) ---
         window.guardarConfiguracion = async function() {
             if (!db || !userId || !isAuthReady) {
-                showMessage("Error", "La conexión a Firebase no está lista. Inténtalo de nuevo en unos segundos o verifica la configuración.", true);
+                showMessage("Error", "La conexión a Firebase no está lista.", true);
                 return;
             }
 
@@ -323,7 +326,7 @@
             }
 
             const configData = {
-                costoTabla: document.getElementById('costo-tabla').value,
+                costoTabla: parseFloat(document.getElementById('costo-tabla').value) || 0,
                 whatsappAdmin: document.getElementById('whatsapp-admin').value,
                 infoPagoReglas: document.getElementById('info-pago-reglas').value,
                 cantidadTotalTablas: cantidadTotalTablas,
@@ -331,15 +334,16 @@
             };
 
             try {
-                // Ruta de escritura: /artifacts/{appId}/users/{userId}/config/main
-                const configPath = `/artifacts/${appId}/users/${userId}/config/main`;
+                // Escritura: /artifacts/{appId}/users/{userId}/config/main
+                const configPath = `artifacts/${appId}/users/${userId}/config/main`;
+                
+                // La función doc(db, path) es la correcta para crear una referencia de documento.
                 await setDoc(doc(db, configPath), configData);
                 
                 showMessage("Éxito", "Configuración guardada correctamente.", false);
             } catch (error) {
                 console.error("Error al guardar configuración:", error);
-                // Este error indica un fallo en las Reglas de Escritura
-                showMessage("Error al Guardar", "Ocurrió un error al guardar. Esto se debe a un fallo en las Reglas de Seguridad de Firestore. Asegúrate de haber publicado la regla de 30 días. Mensaje: " + error.message, true);
+                showMessage("Error al Guardar", `Ocurrió un error al guardar. Posible fallo en las Reglas de Seguridad. Mensaje: ${error.message}`, true);
             }
         }
         
