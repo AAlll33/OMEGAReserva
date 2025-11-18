@@ -214,10 +214,19 @@
     <script type="module">
         // Importaciones de Firebase SDK (versión 11.6.1)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        setLogLevel('Debug'); // <--- DESCOMENTADO para ayudar a depurar la conexión
+        // --- Configuración de Firebase (pegada directamente) ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyAutp6PyTGBScqnaY1h7XwjaPqoNH0xStI",
+          authDomain: "omegareserva-f40fb.firebaseapp.com",
+          projectId: "omegareserva-f40fb",
+          storageBucket: "omegareserva-f40fb.appspot.com",
+          messagingSenderId: "651124710448",
+          appId: "1:651124710448:web:9b4ad317bc3ddf195121f5"
+        };
+        const appId = firebaseConfig.appId;
 
         let db, auth;
         let userId = null;
@@ -241,52 +250,34 @@
             modal.style.display = 'flex';
         }
         
-        // --- Configuración de Firebase (variables de entorno seguras) ---
-        const runtimeFirebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {}; 
-
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
-        
         // --- Inicialización de Firebase y Autenticación ---
         async function initializeFirebase() {
-            // Deshabilitar botón al inicio para evitar el error de "no está lista"
             btnGuardar.disabled = true;
 
             try {
-                if (Object.keys(runtimeFirebaseConfig).length === 0) {
-                     showMessage("Error Crítico", "La configuración de Firebase no está disponible. Asegúrate de estar en el entorno Canvas.", true);
-                     connectionError.classList.remove('hidden');
-                     return;
-                }
-                
                 // 1. Inicializar App
-                const app = initializeApp(runtimeFirebaseConfig);
+                const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // 2. Autenticación (usando el token proporcionado o anónimo)
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // 2. Autenticación Anónima
+                await signInAnonymously(auth);
                 
                 // 3. Listener de Estado de Autenticación
                 onAuthStateChanged(auth, (user) => {
-                    isAuthReady = true; // <--- Bandera de listo activada aquí
-                    loadingIndicator.classList.add('hidden'); // <--- Ocultar carga
-                    btnGuardar.disabled = false; // <--- Habilitar el botón de guardar
+                    isAuthReady = true;
+                    loadingIndicator.classList.add('hidden');
+                    btnGuardar.disabled = false;
 
                     if (user) {
                         userId = user.uid;
                         document.getElementById('admin-id').textContent = 'Admin ID: ' + userId;
                         loadConfigAndReservations();
                     } else {
+                        // Esto no debería ocurrir con signInAnonymously, pero es una salvaguarda
                         userId = crypto.randomUUID();
-                        document.getElementById('admin-id').textContent = 'Admin ID: (Anon) ' + userId.substring(0, 8) + '...';
-                        loadConfigAndReservations();
+                        document.getElementById('admin-id').textContent = 'Admin ID: (Fallback) ' + userId.substring(0, 8) + '...';
+                        showMessage("Error de Autenticación", "No se pudo obtener un ID de usuario.", true);
                     }
                 });
 
@@ -294,32 +285,24 @@
                 console.error("Error al inicializar Firebase o autenticar:", error);
                 loadingIndicator.classList.add('hidden');
                 connectionError.classList.remove('hidden');
-                connectionError.textContent = `Error de conexión: ${error.message}. Verifica las Reglas de Seguridad.`;
-                showMessage("Error Crítico de Firebase", "No se pudo conectar. Por favor, revisa la consola para ver el error de Firebase. Mensaje: " + error.message, true);
+                connectionError.textContent = `Error de conexión: ${error.message}. Verifica tu configuración de Firebase.`;
+                showMessage("Error Crítico de Firebase", "No se pudo conectar. Por favor, revisa la consola para ver el error. Mensaje: " + error.message, true);
             }
         }
 
         // --- Lógica de Carga de Datos (onSnapshot) ---
         function loadConfigAndReservations() {
-            // Ya no es necesario el chequeo 'if (!db || !userId || !isAuthReady) return;' aquí, 
-            // ya que se llama DENTRO de onAuthStateChanged.
-            
-            // 1. Ruta del documento de configuración
             const configPath = `artifacts/${appId}/users/${userId}/config/main`;
             const configRef = doc(db, configPath);
 
-            // 2. Escucha en tiempo real de la configuración
             onSnapshot(configRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    // Actualizar inputs con los datos de Firestore
                     document.getElementById('costo-tabla').value = data.costoTabla || 0;
                     document.getElementById('whatsapp-admin').value = data.whatsappAdmin || '';
                     document.getElementById('info-pago-reglas').value = data.infoPagoReglas || '';
                     document.getElementById('cantidad-total-tablas').value = data.cantidadTotalTablas || 75;
-                    
                     document.getElementById('total-tablas-disponibles').textContent = `Total de Tablas disponibles: ${data.cantidadTotalTablas || '75'}`;
-
                 } else {
                     console.log("No existe configuración previa. Usando valores por defecto.");
                 }
@@ -329,11 +312,9 @@
             });
         }
 
-
         // --- Lógica para Guardar Configuración (setDoc) ---
         window.guardarConfiguracion = async function() {
             if (!db || !userId || !isAuthReady) {
-                // Este mensaje solo debería salir si se intentó hacer trampa, pero lo mantenemos
                 showMessage("Error", "La conexión a Firebase no está lista.", true);
                 return;
             }
@@ -347,7 +328,6 @@
             }
 
             const configData = {
-                // Usar parseFloat o String(value) dependiendo del tipo esperado
                 costoTabla: String(document.getElementById('costo-tabla').value),
                 whatsappAdmin: document.getElementById('whatsapp-admin').value,
                 infoPagoReglas: document.getElementById('info-pago-reglas').value,
@@ -356,11 +336,8 @@
             };
 
             try {
-                // Escritura: /artifacts/{appId}/users/{userId}/config/main
                 const configPath = `artifacts/${appId}/users/${userId}/config/main`;
-                
                 await setDoc(doc(db, configPath), configData);
-                
                 showMessage("Éxito", "Configuración guardada correctamente.", false);
             } catch (error) {
                 console.error("Error al guardar configuración:", error);
@@ -374,4 +351,3 @@
     </script>
 </body>
 </html>
-
