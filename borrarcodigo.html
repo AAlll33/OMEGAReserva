@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserva de Tablas - OMEGA BINGO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --color-primary: #5b21b6; --color-secondary: #facc15; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: #3f0e8f; }
+        .card { background-color: #f3e8ff; padding: 1.5rem; margin-bottom: 1rem; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); color: #3f0e8f; }
+        .btn-main { background-color: var(--color-secondary); color: var(--color-primary); font-weight: 800; padding: 1rem 1.5rem; border-radius: 0.75rem; text-align: center; transition: all 0.3s; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4); }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(250, 204, 21, 0.5); }
+        .btn-main:disabled { background-color: #a7a7a7; cursor: not-allowed; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 1rem 0; }
+        .modal-content { background-color: white; padding: 1.5rem; border-radius: 1rem; width: 95%; max-width: 500px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); max-height: 95vh; overflow-y: auto; }
+        .tabla-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 0.5rem; }
+        .tabla-bingo-select { 
+            display: flex; justify-content: center; align-items: center; 
+            border-radius: 0.75rem; color: white; font-weight: 700; 
+            aspect-ratio: 1 / 1; cursor: pointer; transition: all 0.2s; 
+            user-select: none; font-size: 1.25rem; 
+        }
+        .tabla-bingo-select:hover:not(.tabla-select-reservado):not(.tabla-select-vendido) { transform: scale(1.05); }
+        
+        /* Colores según la solicitud: Morado (Disponible), Amarillo (Seleccionado), Rojo (Vendido/Reservado) */
+        .tabla-select-disponible { background-color: #8b5cf6; } /* violet-500 */
+        .tabla-select-seleccionado { background-color: #facc15; color: #5b21b6; transform: scale(1.1); border: 2px solid #5b21b6; } /* Amarillo */
+        .tabla-select-reservado, .tabla-select-vendido { background-color: #ef4444; color: white; cursor: not-allowed; opacity: 0.8; } /* red-500 */
+    </style>
+</head>
+<body class="p-4 text-white">
+
+    <div class="max-w-2xl mx-auto">
+        <header class="text-center my-4">
+            <img src="https://i.ibb.co/tZ11bZC/logo-omega-mayor.png" alt="Logo Omega Bingo" class="mx-auto h-32">
+        </header>
+
+        <section class="card">
+            <h2 class="text-2xl font-extrabold text-center mb-3">Datos para Pago Móvil</h2>
+            <div id="payment-info" class="text-lg space-y-2">
+                </div>
+        </section>
+
+        <section class="my-6">
+            <button id="btn-comprar" class="btn-main w-full text-2xl">RESERVAR TABLAS</button>
+        </section>
+        
+        <a href="/admin.html" class="text-center block mt-8 text-xs text-yellow-300 underline">Panel de Administración</a>
+    </div>
+
+    <div id="reserve-modal" class="modal-overlay">
+        <div class="modal-content text-gray-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-purple-800">Reserva de Tablas</h3>
+                <button id="close-modal" class="text-2xl font-bold">&times;</button>
+            </div>
+
+            <div id="step-1-table-selection">
+                <h4 class="text-xl font-semibold mb-3">1. Selecciona tus Tablas 🃏</h4>
+                <div id="tabla-selection-grid" class="tabla-grid mb-4">
+                    </div>
+                <div class="text-center font-bold text-xl my-4 p-4 rounded-lg border-2 border-purple-200 bg-purple-100">
+                    Total a Pagar: <span id="total-pagar" class="text-purple-800">Bs. 0.00</span>
+                </div>
+                <button id="btn-go-to-data" class="btn-main w-full" disabled>Siguiente &rarr; Ingresar Datos</button>
+            </div>
+
+            <div id="step-2-player-data" class="hidden">
+                <h4 class="text-xl font-semibold mb-3">2. Ingresa tus Datos y Comprobante 📝</h4>
+                <p class="text-sm mb-4">Vas a reservar <strong id="show-table-count">0</strong> tablas por un total de <strong id="show-total-amount">Bs. 0.00</strong>.</p>
+                <div class="mb-4">
+                    <label for="player-name" class="block font-medium">Nombre y Apellido *</label>
+                    <input type="text" id="player-name" class="w-full p-2 border border-gray-300 rounded" placeholder="Ej: Ana Pérez" required>
+                </div>
+                <div class="mb-4">
+                    <label for="player-phone" class="block font-medium">Número de Teléfono *</label>
+                    <input type="tel" id="player-phone" class="w-full p-2 border border-gray-300 rounded" placeholder="Ej: 04121234567" pattern="04[1246]{1}[0-9]{7}" required>
+                </div>
+                 <div class="mb-4">
+                    <label for="payment-ref" class="block font-medium">4 Últimos Dígitos de la Referencia *</label>
+                    <input type="number" id="payment-ref" class="w-full p-2 border border-gray-300 rounded" placeholder="Ej: 1234" maxlength="4" required>
+                </div>
+                 <div class="mb-4">
+                    <label for="payment-proof-file" class="block font-medium">Comprobante de Pago (Captura/Archivo) *</label>
+                    <input type="file" id="payment-proof-file" accept="image/*" class="w-full p-2 border border-gray-300 rounded bg-gray-50" required>
+                    <p class="text-xs text-red-500 mt-1">Este archivo DEBE cargarse. Por ahora, solo se enviará un placeholder de URL.</p>
+                </div>
+                <div class="flex space-x-2">
+                     <button id="btn-back-to-selection" class="text-center w-1/3 mt-2 text-sm text-gray-500 p-2 rounded-lg border border-gray-300">&larr; Tablas</button>
+                    <button id="btn-confirmar-reserva" class="btn-main w-2/3">Reservar y Notificar Pago</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // NO importamos Storage, la carga de archivos será simulada en este script frontend.
+
+        const firebaseConfig = {"apiKey":"AIzaSyAuYp6PyTgBSqcnaY1h7XwjaPqoNH0xStU","authDomain":"omegareserva-f40fb.firebaseapp.com","projectId":"omegareserva-f40fb","storageBucket":"omegareserva-f40fb.appspot.com","messagingSenderId":"651124710448","appId":"1:651124710448:web:9b4ad317bc3ddf195121f5"};
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let adminId, adminConfig = {}, reservations = {}, selectedTables = [], costoPorTabla = 0;
+        let totalAmount = 0;
+
+        const paymentInfoEl = document.getElementById('payment-info');
+        const btnComprar = document.getElementById('btn-comprar');
+        const reserveModal = document.getElementById('reserve-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        
+        const step1 = document.getElementById('step-1-table-selection');
+        const step2 = document.getElementById('step-2-player-data');
+        const btnGoToData = document.getElementById('btn-go-to-data');
+        const btnBackToSelection = document.getElementById('btn-back-to-selection');
+        const btnConfirmarReserva = document.getElementById('btn-confirmar-reserva');
+        
+        const gridEl = document.getElementById('tabla-selection-grid');
+        const totalPagarEl = document.getElementById('total-pagar');
+        const showTableCountEl = document.getElementById('show-table-count');
+        const showTotalAmountEl = document.getElementById('show-total-amount');
+
+        // Referencias de Datos de Jugador
+        const playerNameInput = document.getElementById('player-name');
+        const playerPhoneInput = document.getElementById('player-phone');
+        const paymentRefInput = document.getElementById('payment-ref');
+        const paymentProofFileInput = document.getElementById('payment-proof-file');
+
+
+        // --- Carga de Datos y Configuración ---
+        function loadConfigAndData() {
+            onSnapshot(doc(db, "config/admin"), (docSnap) => {
+                if (docSnap.exists()) {
+                    adminId = docSnap.data().adminId;
+                    if (adminId) {
+                        onSnapshot(doc(db, `artifacts/${adminId}/config/main`), (configSnap) => {
+                            if (configSnap.exists()) {
+                                adminConfig = configSnap.data();
+                                costoPorTabla = parseFloat(adminConfig.costoTabla) || 0;
+                                // Asume que adminConfig.whatsappAdmin tiene el número para el link de WA
+                                adminConfig.whatsappAdmin = adminConfig.whatsappAdmin || '584121234567'; 
+                                paymentInfoEl.innerHTML = formatPaymentInfo(adminConfig.infoPagoReglas || '');
+                                // Volver a renderizar la grilla por si la config de tablas cambió.
+                                if (reserveModal.style.display === 'flex') renderSelectionGrid();
+                            }
+                        });
+                        onSnapshot(doc(db, `artifacts/${adminId}/reservations/all`), (resSnap) => {
+                            reservations = resSnap.exists() ? resSnap.data() : {};
+                            renderSelectionGrid(); // Actualiza la grilla con el estado más reciente
+                        });
+                    }
+                } else {
+                     paymentInfoEl.innerHTML = formatPaymentInfo(""); // Usa los datos por defecto si la config falla
+                }
+            });
+            // Mostrar info por defecto si Firebase falla o no carga a tiempo
+            if (!adminId) {
+                paymentInfoEl.innerHTML = formatPaymentInfo("");
+            }
+        }
+        
+        // --- Formato y Navegación ---
+        function formatPaymentInfo(infoText) {
+            // Datos fijos del usuario
+            const defaultBank = '0108 (Provincial BBVA)';
+            const defaultCedula = 'V-25822059';
+            const defaultPhone = '04129546751';
+
+            let html = `<p><span class="font-bold">Banco:</span> ${defaultBank}</p>`;
+            html += `<p><span class="font-bold">Cédula:</span> ${defaultCedula}</p>`;
+            html += `<p><span class="font-bold">Teléfono:</span> ${defaultPhone}</p>`;
+            
+            // Si hay reglas adicionales de la config, las agregamos
+            if (infoText) {
+                const lines = infoText.split('\\n');
+                lines.forEach(line => {
+                    const lowerLine = line.toLowerCase();
+                    // Evitar repetir los datos ya fijos
+                    if (lowerLine.includes('provincial') || lowerLine.includes('bbva') || lowerLine.includes('0108')) return;
+                    if (lowerLine.includes('25822059') || lowerLine.includes('v-25822059')) return;
+                    if (lowerLine.includes('04129546751')) return;
+
+                    if (line.trim().length > 0) {
+                        html += `<p>${line.trim()}</p>`;
+                    }
+                });
+            }
+             return html || `<p>La información de pago no está configurada.</p>`;
+        }
+
+        btnComprar.addEventListener('click', () => {
+            step1.classList.remove('hidden');
+            step2.classList.add('hidden');
+            reserveModal.style.display = 'flex';
+            renderSelectionGrid(); // Asegura que la grilla esté actualizada al abrir
+            updateTotal();
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            reserveModal.style.display = 'none';
+        });
+        
+        // Paso 1 a Paso 2
+        btnGoToData.addEventListener('click', () => {
+            if (selectedTables.length === 0) {
+                alert("Debes seleccionar al menos una tabla.");
+                return;
+            }
+            showTableCountEl.textContent = selectedTables.length;
+            showTotalAmountEl.textContent = `Bs. ${totalAmount.toFixed(2)}`;
+            
+            step1.classList.add('hidden');
+            step2.classList.remove('hidden');
+        });
+
+        // Paso 2 a Paso 1
+        btnBackToSelection.addEventListener('click', () => {
+            step1.classList.remove('hidden');
+            step2.classList.add('hidden');
+        });
+
+        // --- Lógica de Selección de Tablas ---
+        function renderSelectionGrid() {
+            gridEl.innerHTML = '';
+            const total = adminConfig.cantidadTotalTablas || 75; // Por defecto son 75 tablas
+            btnGoToData.disabled = selectedTables.length === 0;
+
+            for (let i = 1; i <= total; i++) {
+                const tableNum = String(i);
+                const res = reservations[tableNum];
+                const isSelected = selectedTables.includes(tableNum);
+                
+                const tablaEl = document.createElement('div');
+                tablaEl.textContent = tableNum;
+                tablaEl.dataset.tableNumber = tableNum;
+                tablaEl.className = 'tabla-bingo-select';
+
+                if (res) {
+                    // Si está reservado o vendido (usamos 'reservado' y 'vendido' como estados 'tomados')
+                    tablaEl.classList.add('tabla-select-reservado'); 
+                    tablaEl.title = `Tabla ${tableNum} ya está tomada.`;
+                } else {
+                    tablaEl.classList.add(isSelected ? 'tabla-select-seleccionado' : 'tabla-select-disponible');
+                    tablaEl.addEventListener('click', toggleTableSelection);
+                }
+                gridEl.appendChild(tablaEl);
+            }
+        }
+        
+        function toggleTableSelection(event) {
+            const tableNum = event.target.dataset.tableNumber;
+            const index = selectedTables.indexOf(tableNum);
+            if (index > -1) {
+                selectedTables.splice(index, 1);
+            } else {
+                selectedTables.push(tableNum);
+            }
+            updateTotal();
+            renderSelectionGrid(); // Se llama para aplicar la clase visual (amarillo)
+        }
+
+        function updateTotal() {
+            totalAmount = selectedTables.length * costoPorTabla;
+            totalPagarEl.textContent = `Bs. ${totalAmount.toFixed(2)}`;
+            btnGoToData.disabled = selectedTables.length === 0;
+        }
+        
+        // --- Lógica de Reserva y Notificación WA ---
+        
+        async function uploadFileAndGetUrl(file) {
+            // *** ESTA ES LA SIMULACIÓN DE SUBIDA DE ARCHIVO ***
+            // En una aplicación real, usarías Firebase Storage o una API para subir el archivo.
+            // Por ahora, devolvemos una URL de placeholder.
+            return new Promise((resolve, reject) => {
+                if (file) {
+                    // SIMULACIÓN: En un entorno real se subiría el archivo aquí.
+                    // Para la demo, se genera una URL temporal/local que no sirve para el admin,
+                    // pero cumple con la captura del campo.
+                    const dummyUrl = `[URL_Simulada_Para_Admin/${file.name}_${Date.now()}]`;
+                    resolve(dummyUrl); 
+                } else {
+                    reject(new Error("No se seleccionó archivo de comprobante."));
+                }
+            });
+        }
+        
+        function generateWhatsAppLink(playerData, tableList, total) {
+            // Usar el número de admin de la config, o el número que proporcionaste como admin por defecto
+            const adminPhone = adminConfig.whatsappAdmin || '584129546751'; 
+            const playerInfo = `*NUEVA RESERVA OMEGA BINGO*%0A%0A*👤 Jugador:* ${playerData.name}%0A*📞 Teléfono:* ${playerData.phone}%0A*🔢 Tablas:* ${tableList.join(', ')}%0A*💰 Total:* Bs. ${total.toFixed(2)}%0A*💳 Ref:* ${playerData.ref}%0A*📎 Comprobante:* ${playerData.proofUrl}%0A%0A_Por favor, confirma el pago y el estatus de las tablas en el panel de administración._`;
+            
+            // Usamos el formato internacional sin +
+            const url = `https://wa.me/${adminPhone.replace('+', '')}?text=${encodeURIComponent(playerInfo)}`;
+            return url;
+        }
+
+        btnConfirmarReserva.addEventListener('click', async () => {
+            const playerName = playerNameInput.value.trim();
+            const playerPhone = playerPhoneInput.value.trim();
+            const paymentRef = paymentRefInput.value.trim();
+            const paymentProofFile = paymentProofFileInput.files[0];
+
+            if (!playerName || !playerPhone || !paymentRef || !paymentProofFile) {
+                alert("Por favor, completa todos los campos del formulario y adjunta el comprobante de pago.");
+                return;
+            }
+            if (paymentRef.length !== 4) {
+                 alert("La referencia debe ser de 4 dígitos.");
+                return;
+            }
+            
+            btnConfirmarReserva.disabled = true;
+            btnConfirmarReserva.textContent = 'Procesando...';
+
+            try {
+                 // 1. SIMULAR subida de archivo para obtener la URL
+                const proofUrl = await uploadFileAndGetUrl(paymentProofFile);
+
+                // 2. Realizar la transacción en Firebase
+                const reservationsRef = doc(db, `artifacts/${adminId}/reservations/all`);
+                await runTransaction(db, async (transaction) => {
+                    const resDoc = await transaction.get(reservationsRef);
+                    const currentRes = resDoc.exists() ? resDoc.data() : {};
+                    
+                    for (const tableNum of selectedTables) {
+                        if (currentRes[tableNum] && (currentRes[tableNum].status === 'reservado' || currentRes[tableNum].status === 'vendido')) {
+                            throw new Error(`La tabla ${tableNum} ya fue tomada mientras seleccionabas. Por favor, refresca la selección.`);
+                        }
+                    }
+
+                    const newReservationData = { ...currentRes };
+                    selectedTables.forEach(tableNum => {
+                        newReservationData[tableNum] = {
+                            status: 'reservado', 
+                            player: { 
+                                name: playerName, 
+                                phone: playerPhone, 
+                                ref: paymentRef,
+                                proofUrl: proofUrl // Guardamos la URL simulada en la reserva
+                            },
+                            amount: costoPorTabla,
+                            timestamp: new Date().toISOString()
+                        };
+                    });
+                    transaction.set(reservationsRef, newReservationData);
+                });
+
+                // 3. Generar y abrir el link de WhatsApp
+                const whatsappUrl = generateWhatsAppLink(
+                    { name: playerName, phone: playerPhone, ref: paymentRef, proofUrl: proofUrl },
+                    selectedTables,
+                    totalAmount
+                );
+                
+                // Mensaje de éxito
+                alert(`¡Reserva completada para ${playerName}! Se ha notificado al administrador. Por favor, haz clic en ACEPTAR para enviar el comprobante por WhatsApp.`);
+                window.open(whatsappUrl, '_blank');
+                
+                // Limpiar y cerrar
+                reserveModal.style.display = 'none';
+                selectedTables = []; 
+                playerNameInput.value = '';
+                playerPhoneInput.value = '';
+                paymentRefInput.value = '';
+                paymentProofFileInput.value = '';
+
+                
+            } catch (error) {
+                console.error("Error en la transacción: ", error);
+                alert(error.message || "No se pudo completar la reserva. Alguna de las tablas seleccionadas ya no está disponible. Por favor, refresca la página e inténtalo de nuevo.");
+                
+            } finally {
+                btnConfirmarReserva.disabled = false;
+                btnConfirmarReserva.textContent = 'Reservar y Notificar Pago';
+            }
+        });
+
+        loadConfigAndData();
+    </script>
+</body>
+</html>
