@@ -3,351 +3,467 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RESERVA DE TABLAS OMEGA BINGO - Panel de Administración</title>
-    <!-- Carga Tailwind CSS para un diseño moderno y responsive -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>OMEGA BINGO MAYOR | Compra y Reserva</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* --- CSS STYLES --- */
         :root {
-            --color-primary: #5b21b6; /* Morado Oscuro */
-            --color-secondary: #facc15; /* Amarillo */
+            --primary-color: #6a0dad; /* Púrpura */
+            --secondary-color: #ffc107; /* Amarillo */
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --bg-light: #f5f5f5;
         }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #3f0e8f; /* Fondo oscuro morado */
+            font-family: sans-serif;
+            background-color: var(--primary-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-dark);
+            text-align: center;
         }
-        .card {
-            background-color: white;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: var(--bg-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
-        .admin-panel {
-            background-color: var(--color-primary);
-            color: white;
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 1rem;
+
+        .header img {
+            max-width: 250px;
+            margin: 20px 0;
         }
+
+        .info-box, .section-box {
+            background-color: var(--text-light);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        /* --- Estilos de Datos de Pago --- */
+        .payment-data p {
+            margin: 5px 0;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .payment-data p strong {
+            color: var(--primary-color);
+        }
+        .copy-icon {
+            cursor: pointer;
+            color: var(--primary-color);
+            margin-left: 10px;
+        }
+
+        /* --- Botón Principal --- */
         .btn-primary {
-            background-color: var(--color-primary);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
+            background-color: var(--secondary-color);
+            color: var(--text-dark);
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
             transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
         }
         .btn-primary:hover {
-            background-color: #4c1d95;
+            background-color: #ffdb58;
         }
-        /* Estilo para el botón de Guardar Configuración */
-        .btn-save-config {
-            background-color: var(--color-primary);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            font-weight: 700;
-            box-shadow: 0 4px 15px rgba(91, 33, 179, 0.4);
+        .btn-secondary {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
         }
-        .btn-save-config:hover:not(:disabled) {
-            background-color: #4c1d95;
+        .btn-secondary:hover {
+            background-color: #8a2be2;
         }
-        .btn-save-config:disabled {
-            background-color: #a78bfa; /* Morado claro cuando está deshabilitado */
+
+        /* --- GRID de Tablas --- */
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .board-button {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            padding: 10px 5px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: opacity 0.3s, background-color 0.3s;
+            position: relative;
+        }
+        .board-button:hover:not(.sold, .selected) {
+            opacity: 0.8;
+        }
+        .board-button.sold {
+            background-color: #dc3545; /* Rojo */
             cursor: not-allowed;
         }
-
-        /* Estilo del Header Amarillo */
-        header {
-            background-color: var(--color-secondary);
-            color: var(--color-primary);
-            font-size: 1.5rem;
-            font-weight: 800;
-            text-align: center;
-            padding: 1rem 0;
-            margin-bottom: 1rem;
-            border-radius: 0.75rem;
+        .board-button.selected {
+            background-color: var(--secondary-color);
+            color: var(--text-dark);
+            border: 2px solid var(--primary-color);
+            font-weight: bold;
         }
-        /* Estilo para el modal de Error/Mensaje */
-        .modal-overlay {
+
+        .view-carton-btn {
+            background-color: rgba(255, 255, 255, 0.3);
+            color: var(--text-light);
+            border: none;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            cursor: pointer;
+            margin-top: 5px;
+            display: block;
+            width: 100%;
+        }
+        .selected .view-carton-btn {
+            color: var(--text-dark);
+        }
+
+        /* --- Consultas --- */
+        .consult-form input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border-radius: 0 0 10px 10px;
+        }
+        .footer a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            margin: 0 5px;
+        }
+        .footer p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        /* --- Modal de Cartón --- */
+        .modal {
+            display: none;
             position: fixed;
-            top: 0;
+            z-index: 1000;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
         }
+
         .modal-content {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            width: 90%;
+            background-color: var(--text-light);
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
             max-width: 400px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            position: relative;
             text-align: center;
         }
-        .text-purple-700 { color: #5b21b6; }
-        .bg-yellow-100 { background-color: #fef3c7; }
-        .text-yellow-800 { color: #92400e; }
-
-        /* Estilo para el spinner de carga */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--color-secondary);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .bingo-card {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            border: 5px solid var(--primary-color);
+            margin-top: 10px;
+        }
+        .card-cell {
+            padding: 10px 5px;
+            border: 1px solid #ccc;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-header {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            font-size: 1.3em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            grid-column: span 5;
+            padding: 10px 0;
         }
 
     </style>
 </head>
-<body class="p-4">
-
-    <header class="shadow-lg">
-        RESERVA DE TABLAS OMEGA BINGO
-        <div id="total-tablas-disponibles" class="text-sm font-semibold text-gray-700">Total de Tablas disponibles: Cargando...</div>
-    </header>
-
-    <!-- Error de Conexión (visible si falla) -->
-    <div id="connection-error" class="hidden bg-red-500 text-white p-3 rounded-lg mb-4 text-sm font-semibold text-center">
-        Error de conexión: Por favor, revisa la configuración de Firebase en el código.
-    </div>
-    
-    <!-- Mensaje de Carga (Se oculta al conectar con Firebase) -->
-    <div id="loading-indicator" class="bg-yellow-100 text-yellow-800 p-3 rounded-lg mb-4 text-sm font-semibold text-center flex items-center justify-center space-x-2">
-        <div class="loader"></div>
-        <span>Conectando con Firebase... Por favor, espere.</span>
-    </div>
-
-    <!-- Panel de Administración - Botones de Navegación -->
-    <div class="flex justify-around mb-4">
-        <button onclick="window.location.href = '#vista-jugador';" class="flex items-center space-x-2 bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-4 rounded-xl transition duration-300">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
-            <span>Vista del Jugador</span>
-        </button>
-        <button onclick="window.location.href = '#panel-administracion';" class="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-purple-900 font-bold py-3 px-4 rounded-xl transition duration-300">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zM9 7a1 1 0 012 0v2h-2V7z" /></svg>
-            <span>Panel de Administración</span>
-        </button>
-    </div>
-
-
-    <!-- Sección Principal de Administración -->
-    <section id="panel-administracion" class="admin-panel shadow-2xl">
-        <h2 class="text-xl font-bold mb-3 flex items-center space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-.28-.84-.36-1.27-.24C10.04 3.42 9.8 3.87 9.8 4.3v4.43a2.32 2.32 0 011.16-.32h.01c.41 0 .78.14 1.05.38.27.24.42.59.42.98v1.89c0 .66-.46 1.25-1.12 1.39l-2.02.41a3.02 3.02 0 00-1.89.56l-1.01.6c-.34.2-.6.47-.73.8-.13.33-.17.69-.1.97.07.28.25.54.51.72.26.18.6.28 1 .28h6.12c.7 0 1.27-.58 1.27-1.3v-1.89c0-.4-.15-.75-.42-.98-.27-.24-.64-.38-1.05-.38h-.01a2.32 2.32 0 01-1.16-.32V4.3c0-.43-.24-.88-.67-1.01zM10 18a8 8 0 100-16 8 8 0 000 16z" clip-rule="evenodd" /></svg>
-            <span>Panel de Administración</span>
-        </h2>
-        <div id="admin-id" class="text-sm mb-4">Admin ID: Cargando...</div>
-
-        <!-- Bloque de Configuración General -->
-        <div class="card bg-purple-100 text-purple-900">
-            <h3 class="text-lg font-bold mb-3 text-purple-700">Configuración General</h3>
-            
-            <label class="block text-sm font-medium mb-1">Costo de la Tabla (Ej: 300,00 Bs):</label>
-            <input type="number" id="costo-tabla" value="300" class="w-full p-2 border border-purple-300 rounded-lg mb-3 focus:ring-purple-500 focus:border-purple-500">
-
-            <label class="block text-sm font-medium mb-1">WhatsApp del Administrador (Solo números, con código de país. Ej: 584121234567):</label>
-            <input type="text" id="whatsapp-admin" value="58426431972" class="w-full p-2 border border-purple-300 rounded-lg mb-3 focus:ring-purple-500 focus:border-purple-500">
-
-            <label class="block text-sm font-medium mb-1">Información de Pago y Reglas (se mostrará al jugador):</label>
-            <textarea id="info-pago-reglas" rows="5" class="w-full p-2 border border-purple-300 rounded-lg mb-3 focus:ring-purple-500 focus:border-purple-500">25822059
-04129546751
-0108 provincial</textarea>
-
-            <label class="block text-sm font-medium mb-1">Cantidad Total de Tablas Activas (Máx 75):</label>
-            <input type="number" id="cantidad-total-tablas" value="75" min="1" max="75" class="w-full p-2 border border-purple-300 rounded-lg mb-1 focus:ring-purple-500 focus:border-purple-500">
-            <p class="text-xs text-gray-500 mb-4">Establece el número máximo de tablas (desde 01) que estarán activas y visibles. El sistema base admite hasta 75 tablas.</p>
-            
-            <button onclick="guardarConfiguracion()" id="btn-guardar-configuracion" class="btn-save-config w-full transition duration-300" disabled>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7z" /><path fill-rule="evenodd" d="M18 8v5a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h12a2 2 0 012 2zM3.75 9A.75.75 0 003 9.75v1.5a.75.75 0 00.75.75h1.5A.75.75 0 006 11.25v-1.5A.75.75 0 005.25 9h-1.5z" clip-rule="evenodd" /></svg>
-                Guardar Configuración
-            </button>
-        </div>
-
-        <!-- Bloque de Gestión de Reservas (Simplified) -->
-        <div class="card bg-purple-100 text-purple-900 mt-4">
-            <h3 class="text-lg font-bold mb-3 text-purple-700">Gestión de Reservas (Ctrl + Clic para seleccionar múltiples)</h3>
-            <p class="bg-yellow-100 text-yellow-800 p-3 rounded-lg mb-3">
-                <span class="font-bold">Tablas Seleccionadas: </span><span id="tablas-seleccionadas-count">0</span><br>
-                <span id="tablas-seleccionadas-lista">Ninguno</span>
-            </p>
-            <!-- Botones de Acción -->
-            <div class="flex flex-wrap gap-2">
-                <button class="flex items-center space-x-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 rounded-lg transition duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                    Confirmar Venta (Vendido)
-                </button>
-                <button class="flex items-center space-x-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg transition duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 100 2h-2a1 1 0 100-2h2z" clip-rule="evenodd" /></svg>
-                    Liberar Tablas (Disponible)
-                </button>
-                <button class="flex items-center space-x-1 bg-blue-400 hover:bg-blue-500 text-white font-semibold py-2 px-3 rounded-lg transition duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" /><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3h-2a3 3 0 01-3-3H6z" /></svg>
-                    Copiar Info Detallada
-                </button>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://via.placeholder.com/250x100/6a0dad/ffc107?text=OMEGA+BINGO+MAYOR" alt="Logo OMEGA Bingo Mayor">
             </div>
-            <!-- Aquí irían las tablas seleccionables (omitiéndolas por simplicidad del ejemplo) -->
+
+        <div class="info-box payment-data">
+            <h2>Datos para Pago Móvil</h2>
+            <p>Banco: <strong>0108 (Provincial BBVA)</strong> <i class="fas fa-copy copy-icon" data-text="0108"></i></p>
+            <p>Cédula: <strong>V25822059</strong> <i class="fas fa-copy copy-icon" data-text="25822059"></i></p>
+            <p>Teléfono: <strong>04129546751</strong> <i class="fas fa-copy copy-icon" data-text="04129546751"></i></p>
+            <p>Costo por Tabla: <strong>Bs. 300.00</strong></p>
         </div>
-    </section>
-    
-    <!-- Modal para Errores/Mensajes (Sustituto de alert/confirm) -->
-    <div id="app-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h4 id="modal-title" class="text-xl font-bold mb-3 text-red-600">Error</h4>
-            <p id="modal-message" class="mb-5">Mensaje de error.</p>
-            <button id="modal-close" class="btn-primary">Cerrar</button>
+
+        <div class="section-box">
+            <h2>Selecciona tus Tablas</h2>
+            <div id="board-grid" class="board-grid">
+                </div>
+            <p style="margin-top: 15px;">Total a Pagar: <strong id="total-price" style="color: #dc3545;">Bs. 0.00</strong></p>
+            <button class="btn-secondary" id="buy-tables-btn" disabled>COMPRAR TABLAS Y ENVIAR AL ADMIN</button>
+        </div>
+
+        <div class="section-box consult-form">
+            <h2>Consulta tu Tabla Asignada</h2>
+            <input type="text" id="consult-phone" placeholder="Teléfono del Jugador (Ej: 04121234567)">
+            <button class="btn-primary" onclick="consultarTabla()">Consultar</button>
+            <div id="consult-result" style="margin-top: 10px; font-weight: bold;"></div>
+            
+            <hr style="margin: 20px 0; border-top: 1px solid #eee;">
+            
+            <input type="number" id="view-board-num" placeholder="Número de Tabla (Ej: 23)" min="1" max="75">
+            <button class="btn-secondary" onclick="openBoardModal(document.getElementById('view-board-num').value)">Ver Tabla</button>
+        </div>
+
+        <div class="footer">
+            <p>Para más información, contacta al Administrador Ángel:</p>
+            <p>+584226431972</p>
+            <a href="https://wa.me/584226431972" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+            <p>&copy; Copyright 2025 OMEGA BINGO MAYOR. Todos los derechos reservados.</p>
         </div>
     </div>
 
+    <div id="board-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeBoardModal()">&times;</span>
+            <h3 id="modal-board-title">Cartón #</h3>
+            <div id="modal-bingo-card" class="bingo-card">
+                <div class="card-header" style="grid-column: span 5;">B I N G O</div>
+                <div class="card-cell">2</div><div class="card-cell">20</div><div class="card-cell">42</div><div class="card-cell">55</div><div class="card-cell">67</div>
+                <div class="card-cell">11</div><div class="card-cell">25</div><div class="card-cell">45</div><div class="card-cell">58</div><div class="card-cell">69</div>
+                <div class="card-cell">15</div><div class="card-cell">30</div><div class="card-cell">FREE</div><div class="card-cell">60</div><div class="card-cell">72</div>
+                <div class="card-cell">4</div><div class="card-cell">35</div><div class="card-cell">48</div><div class="card-cell">52</div><div class="card-cell">61</div>
+                <div class="card-cell">7</div><div class="card-cell">18</div><div class="card-cell">39</div><div class="card-cell">50</div><div class="card-cell">75</div>
+            </div>
+            <small style="display: block; margin-top: 10px;">Este es un cartón de ejemplo. El cartón real para la tabla #<span id="modal-board-num"></span> será enviado al confirmar el pago.</small>
+        </div>
+    </div>
 
-    <script type="module">
-        // Importaciones de Firebase SDK (versión 11.6.1)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // --- JAVASCRIPT LOGIC ---
 
-        // --- Configuración de Firebase (pegada directamente) ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyAuYp6PyTgBSqcnaY1h7XwjaPqoNH0xStU",
-          authDomain: "omegareserva-f40fb.firebaseapp.com",
-          projectId: "omegareserva-f40fb",
-          storageBucket: "omegareserva-f40fb.appspot.com",
-          messagingSenderId: "651124710448",
-          appId: "1:651124710448:web:9b4ad317bc3ddf195121f5"
-        };
-        const appId = firebaseConfig.appId;
+        const BOARD_COUNT = 75; // Total de tablas disponibles
+        const BOARD_PRICE = 300.00; // Costo por tabla
+        const ADMIN_WHATSAPP = '584226431972'; // Número de WhatsApp del administrador (Ángel)
 
-        let db, auth;
-        let userId = null;
-        let isAuthReady = false;
-
-        // --- Elementos de UI ---
-        const btnGuardar = document.getElementById('btn-guardar-configuracion');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const connectionError = document.getElementById('connection-error');
+        // Simulación de tablas vendidas (Puedes actualizar esto manualmente)
+        let soldBoards = [1, 5, 16, 22, 50]; // Ejemplo: Tablas 1, 5, 16, 22 y 50 están vendidas
         
-        // --- Manejo del Modal de Mensajes ---
-        const modal = document.getElementById('app-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalMessage = document.getElementById('modal-message');
-        document.getElementById('modal-close').addEventListener('click', () => modal.style.display = 'none');
+        let selectedBoards = [];
 
-        function showMessage(title, message, isError = false) {
-            modalTitle.textContent = title;
-            modalMessage.textContent = message;
-            modalTitle.className = isError ? 'text-xl font-bold mb-3 text-red-600' : 'text-xl font-bold mb-3 text-green-600';
-            modal.style.display = 'flex';
-        }
-        
-        // --- Inicialización de Firebase y Autenticación ---
-        async function initializeFirebase() {
-            btnGuardar.disabled = true;
-
-            try {
-                // 1. Inicializar App
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // 2. Autenticación Anónima
-                await signInAnonymously(auth);
+        // Genera los botones de las 75 tablas
+        function generateBoardButtons() {
+            const grid = document.getElementById('board-grid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= BOARD_COUNT; i++) {
+                const isSold = soldBoards.includes(i);
+                const button = document.createElement('button');
+                button.className = 'board-button';
+                button.textContent = i;
                 
-                // 3. Listener de Estado de Autenticación
-                onAuthStateChanged(auth, (user) => {
-                    isAuthReady = true;
-                    loadingIndicator.classList.add('hidden');
-                    btnGuardar.disabled = false;
+                // Botón "Ver" para previsualizar
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'view-carton-btn';
+                viewBtn.textContent = 'VER';
+                viewBtn.onclick = (e) => {
+                    e.stopPropagation(); // Evita que se seleccione la tabla al ver el cartón
+                    openBoardModal(i);
+                };
 
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('admin-id').textContent = 'Admin ID: ' + userId;
-                        loadConfigAndReservations();
-                    } else {
-                        // Esto no debería ocurrir con signInAnonymously, pero es una salvaguarda
-                        userId = crypto.randomUUID();
-                        document.getElementById('admin-id').textContent = 'Admin ID: (Fallback) ' + userId.substring(0, 8) + '...';
-                        showMessage("Error de Autenticación", "No se pudo obtener un ID de usuario.", true);
-                    }
-                });
+                button.appendChild(viewBtn);
 
-            } catch (error) {
-                console.error("Error al inicializar Firebase o autenticar:", error);
-                loadingIndicator.classList.add('hidden');
-                connectionError.classList.remove('hidden');
-                connectionError.textContent = `Error de conexión: ${error.message}. Verifica tu configuración de Firebase.`;
-                showMessage("Error Crítico de Firebase", "No se pudo conectar. Por favor, revisa la consola para ver el error. Mensaje: " + error.message, true);
+                if (isSold) {
+                    button.classList.add('sold');
+                    button.textContent = 'VENDIDA';
+                    button.prepend(document.createTextNode(i + ' ')); // Para que diga "1 VENDIDA"
+                    button.onclick = null;
+                } else {
+                    button.onclick = () => toggleBoardSelection(i, button);
+                }
+
+                grid.appendChild(button);
             }
         }
 
-        // --- Lógica de Carga de Datos (onSnapshot) ---
-        function loadConfigAndReservations() {
-            const configPath = `artifacts/${appId}/users/${userId}/config/main`;
-            const configRef = doc(db, configPath);
-
-            onSnapshot(configRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById('costo-tabla').value = data.costoTabla || 0;
-                    document.getElementById('whatsapp-admin').value = data.whatsappAdmin || '';
-                    document.getElementById('info-pago-reglas').value = data.infoPagoReglas || '';
-                    document.getElementById('cantidad-total-tablas').value = data.cantidadTotalTablas || 75;
-                    document.getElementById('total-tablas-disponibles').textContent = `Total de Tablas disponibles: ${data.cantidadTotalTablas || '75'}`;
-                } else {
-                    console.log("No existe configuración previa. Usando valores por defecto.");
-                }
-            }, (error) => {
-                console.error("Error al obtener la configuración (onSnapshot):", error);
-                showMessage("Error de Lectura", "Error al cargar la configuración. Revisa tus Reglas de Seguridad de Firestore.", true);
-            });
+        // Selecciona o deselecciona una tabla
+        function toggleBoardSelection(boardNum, button) {
+            const index = selectedBoards.indexOf(boardNum);
+            if (index > -1) {
+                // Deseleccionar
+                selectedBoards.splice(index, 1);
+                button.classList.remove('selected');
+            } else {
+                // Seleccionar
+                selectedBoards.push(boardNum);
+                button.classList.add('selected');
+            }
+            updateTotalPrice();
         }
 
-        // --- Lógica para Guardar Configuración (setDoc) ---
-        window.guardarConfiguracion = async function() {
-            if (!db || !userId || !isAuthReady) {
-                showMessage("Error", "La conexión a Firebase no está lista.", true);
+        // Actualiza el precio total a pagar
+        function updateTotalPrice() {
+            const totalPrice = selectedBoards.length * BOARD_PRICE;
+            document.getElementById('total-price').textContent = `Bs. ${totalPrice.toFixed(2)}`;
+            const buyBtn = document.getElementById('buy-tables-btn');
+            buyBtn.disabled = selectedBoards.length === 0;
+            buyBtn.textContent = selectedBoards.length === 0 
+                ? 'COMPRAR TABLAS Y ENVIAR AL ADMIN'
+                : `COMPRAR ${selectedBoards.length} TABLA(S) - Bs. ${totalPrice.toFixed(2)}`;
+        }
+
+        // Función de compra y envío a WhatsApp
+        document.getElementById('buy-tables-btn').addEventListener('click', function() {
+            if (selectedBoards.length === 0) return;
+
+            const total = (selectedBoards.length * BOARD_PRICE).toFixed(2);
+            const boardsList = selectedBoards.sort((a, b) => a - b).join(', ');
+
+            // Datos de Pago Móvil para el mensaje
+            const pagoMovilInfo = `Banco: 0108 (Provincial BBVA), Cédula: V25822059, Teléfono: 04129546751.`;
+
+            // Mensaje de WhatsApp
+            const message = `
+*--- RESERVA DE BINGO ---*
+
+¡Hola, OMEGA BINGO MAYOR! He realizado mi Pago Móvil para reservar:
+
+*Tablas Solicitadas:* ${boardsList}
+*Cantidad de Tablas:* ${selectedBoards.length}
+*Monto Total Pagado:* Bs. ${total}
+
+*Datos de Pago Móvil:*
+He transferido a la cuenta de pago móvil:
+${pagoMovilInfo}
+
+*¡Espera la confirmación de la reserva y el número de referencia del pago!*
+            `.trim();
+            
+            const whatsappURL = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`;
+            
+            // Abrir WhatsApp en una nueva pestaña
+            window.open(whatsappURL, '_blank');
+
+            alert("Serás redirigido a WhatsApp para enviar los datos de tu compra y confirmar el pago. Por favor, envía el comprobante.");
+        });
+
+        // Simulación de consulta de tabla
+        function consultarTabla() {
+            const phone = document.getElementById('consult-phone').value.trim();
+            const resultDiv = document.getElementById('consult-result');
+            resultDiv.innerHTML = '';
+
+            if (phone.length < 10) {
+                resultDiv.textContent = 'Por favor, introduce un número de teléfono válido.';
+                resultDiv.style.color = '#dc3545';
                 return;
             }
 
-            const inputElement = document.getElementById('cantidad-total-tablas');
-            const cantidadTotalTablas = parseInt(inputElement.value);
-
-            if (isNaN(cantidadTotalTablas) || cantidadTotalTablas <= 0) {
-                 showMessage("Error de Validación", "La cantidad total de tablas debe ser un número entero mayor a 0.", true);
-                 return;
-            }
-
-            const configData = {
-                costoTabla: String(document.getElementById('costo-tabla').value),
-                whatsappAdmin: document.getElementById('whatsapp-admin').value,
-                infoPagoReglas: document.getElementById('info-pago-reglas').value,
-                cantidadTotalTablas: cantidadTotalTablas,
-                timestamp: new Date().toISOString()
-            };
-
-            try {
-                const configPath = `artifacts/${appId}/users/${userId}/config/main`;
-                await setDoc(doc(db, configPath), configData);
-                showMessage("Éxito", "Configuración guardada correctamente.", false);
-            } catch (error) {
-                console.error("Error al guardar configuración:", error);
-                showMessage("Error al Guardar", `Ocurrió un error al guardar. Revisa la consola y las Reglas de Seguridad. Mensaje: ${error.message}`, true);
+            // SIMULACIÓN: Asigna una tabla aleatoria para este ejemplo.
+            // En una aplicación real, aquí iría una consulta a una base de datos.
+            const assignedBoard = phone.slice(-1) * 2 + 10; // Ejemplo de asignación simple
+            
+            if (assignedBoard % 2 === 0) { // Si el resultado es par (simulando no encontrado)
+                resultDiv.textContent = `Lo sentimos, no encontramos una reserva para el número ${phone}.`;
+                resultDiv.style.color = '#dc3545';
+            } else {
+                resultDiv.innerHTML = `¡Felicidades! Tu tabla asignada es la *TABLA Nro. ${assignedBoard}*.`;
+                resultDiv.style.color = 'green';
             }
         }
-        
-        // Iniciar la aplicación al cargar la ventana
-        window.onload = initializeFirebase;
-        
+
+        // Funciones del Modal
+        function openBoardModal(boardNum) {
+            const num = parseInt(boardNum);
+            if (isNaN(num) || num < 1 || num > BOARD_COUNT) {
+                alert(`Número de tabla inválido. Debe ser entre 1 y ${BOARD_COUNT}.`);
+                return;
+            }
+            document.getElementById('modal-board-title').textContent = `Cartón #${num}`;
+            document.getElementById('modal-board-num').textContent = num;
+            // NOTA: Para una implementación real, cargarías los números del cartón real aquí.
+            document.getElementById('board-modal').style.display = 'block';
+        }
+
+        function closeBoardModal() {
+            document.getElementById('board-modal').style.display = 'none';
+        }
+
+        // Funcionalidad de copiar al portapapeles
+        document.querySelectorAll('.copy-icon').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const textToCopy = this.getAttribute('data-text');
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const originalClass = this.className;
+                    this.className = 'fas fa-check copy-icon'; // Mostrar check
+                    setTimeout(() => {
+                        this.className = originalClass; // Volver al ícono de copia
+                    }, 1000);
+                }).catch(err => {
+                    console.error('Error al copiar: ', err);
+                });
+            });
+        });
+
+
+        // Inicializar la aplicación
+        window.onload = generateBoardButtons;
     </script>
 </body>
 </html>
